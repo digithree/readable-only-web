@@ -2,6 +2,8 @@
 
 // TODO : change this to server address
 const REAL_SERVICE_HOST_ADDR = 'http://row-alone.fr.openode.io'
+// use Duck Duck Go with options (kd) redirect off, (k1) ads off, (ko) header totally off, (kam) OpenStreetMap for directions
+const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kam=osm&q='
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -29,7 +31,37 @@ app.get('/search', function (req, res) {
     return
   }
   // TODO : add actual query here
-  htmlResult(constructSearchlErrorPage('PLACEHOLDER, search is not yet implemented'), res)
+  //htmlResult(constructSearchlErrorPage('PLACEHOLDER, search is not yet implemented'), res)
+  var searchTerm = req.query.q
+  var url = SEARCH_API_ADDR + encodeURI(searchTerm)
+  request.get({
+    url: url,
+    headers: {'User-Agent': 'request'}
+  }, (err, res2, data) => {
+    if (err) {
+      htmlResult(constructSearchlErrorPage(searchTerm), res)
+      return
+    }
+    // TODO : add in DOMPurify usage!
+    /*
+    var dirtyDom = new JSDOM(data, {url: url});
+    var DOMPurify = createDOMPurify(dirtyDom.window);
+    let cleanHtmlText = DOMPurify.sanitize(dirtyDom);
+    console.log('cleanHtmlText:')
+    var output = '';
+    for (var property in cleanHtmlText) {
+      output += property + ': ' + cleanHtmlText[property]+'; ';
+    }
+    console.log(output);
+    //console.log(JSON.stringify(cleanHtmlText, null, 4))
+    var cleanDom = new JSDOM(cleanHtmlText, {url: url});
+    let reader = new Readability(cleanDom.window.document);
+    */
+    var dom = new JSDOM(data, {url: url});
+    let reader = new Readability(dom.window.document);
+    let article = reader.parse();
+    htmlResult(constructArticlePage(article, url), res)
+  })
 })
 
 app.get('/url', function (req, res) {
@@ -55,6 +87,7 @@ function processUrlDefault(url, res) {
       htmlResult(constructUrlErrorPage(url), res)
       return
     }
+    // TODO : add in DOMPurify usage!
     /*
     var dirtyDom = new JSDOM(data, {url: url});
     var DOMPurify = createDOMPurify(dirtyDom.window);
@@ -78,14 +111,14 @@ function processUrlDefault(url, res) {
 
 function constructArticlePage(article, url) {
   if (article === undefined || article == null) {
-    return constructErrorPage(url)
+    return constructUrlErrorPage(url)
   }
   var title = article.title + ' [ROW Alone]'
   var updatedContentHtml = S(article.content)
       .replaceAll(
         'href="http',
-        'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http')
-      .toString()
+        'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
+      ).toString()
   return htmlBuilder({
     title: title,
     content: '<h1>' + title + '</h1>' + updatedContentHtml
