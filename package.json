@@ -1,0 +1,35 @@
+{
+  "name": "readable-only-web",
+  "version": "0.1.0",
+  "description": "Readable filter for the web. Put distance between your hardware and trackers.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digithree/read-only-web-server.git"
+  },
+  "keywords": [
+    "node"
+  ],
+  "author": "Simon Kenny",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/digithree/read-only-web-server"
+  },
+  "homepage": "https://github.com/digithree/read-only-web-server",
+  "dependencies": {
+    "atob": "^2.0.3",
+    "body-parser": "^1.19.0",
+    "btoa": "^1.1.2",
+    "dompurify": "1.0.11",
+    "express": "^4.17.1",
+    "jsdom": "15.1.1",
+    "moz-readability-node": "0.2.4",
+    "node-html-builder": "1.0.2",
+    "request": "2.88.0",
+    "string": "3.3.3"
+  }
+}
