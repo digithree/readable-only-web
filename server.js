@@ -1,7 +1,7 @@
 'use strict';
 
 // TODO : change this to server address
-const REAL_SERVICE_HOST_ADDR = 'http://localhost:5000'
+const REAL_SERVICE_HOST_ADDR = 'http://row-alone.fr.openode.io'
 
 const express = require('express')
 const bodyParser = require('body-parser')
