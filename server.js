@@ -1,7 +1,7 @@
 'use strict';
 
 // TODO : change this to server address
-const REAL_SERVICE_HOST_ADDR = 'http://row-alone.fr.openode.io'
+const REAL_SERVICE_HOST_ADDR = 'http://row.fr.openode.io'
 // use Duck Duck Go with options (kd) redirect off, (k1) ads off, (ko) header totally off, (kam) OpenStreetMap for directions
 const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kam=osm&q='
 
@@ -113,7 +113,7 @@ function constructArticlePage(article, url) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url)
   }
-  var title = article.title + ' [ROW Alone]'
+  var title = article.title + ' [ROW]'
   var updatedContentHtml = S(article.content)
       .replaceAll(
         'href="http',
@@ -127,26 +127,26 @@ function constructArticlePage(article, url) {
 
 function constructUrlErrorPage(url) {
   return htmlBuilder({
-    title: 'Error accessing URL [ROW Alone]',
-    content: '<h2>Error accessing URL [ROW Alone]</h2>' +
+    title: 'Error accessing URL [ROW]',
+    content: '<h2>Error accessing URL [ROW]</h2>' +
         '<p>Could not extract article format for URL: ' + url
   })
 }
 
 function constructSearchlErrorPage(searchTerm) {
   return htmlBuilder({
-    title: 'Error performing search [ROW Alone]',
-    content: '<h2>Error performing search [ROW Alone]</h2>' +
+    title: 'Error performing search [ROW]',
+    content: '<h2>Error performing search [ROW]</h2>' +
         '<p>Could not perform search for term: ' + searchTerm
   })
 }
 
 function constructHomePage() {
   return htmlBuilder({
-    title: 'Getting Started [ROW Alone]',
-    content: '<h2>Getting Started [ROW Alone]</h2>' +
+    title: 'Getting Started [ROW]',
+    content: '<h2>Getting Started [ROW]</h2>' +
         '<p>Readable filter for the web. Put distance between your hardware and trackers.</p>' +
-        '<h3>ROW Alone = Readable Only Web Alone</h3>' +
+        '<h3>ROW is the Readable Only Web</h3>' +
         '<blockquote><i>Row, row, row your browser' +
         '<br>Gently up the stream.' +
         '<br>Merrily, merrily merrily, merrily,' +
@@ -160,7 +160,7 @@ function constructHomePage() {
         '<li><p>All links will also route through this service, giving you seemless usage. However links may have referral codes, removal in future version.</p></li>' +
         '<li><p>Script injection is still possible, full cleaner coming in future version. Should be more or less okay for now.</p></li></ol>' +
         '<h2>Enjoy!</h2>' +
-        '<p>Written by Simon Kenny to prove a point. You can get a lot out of just text. Enjoy the simple life yo.</p>'
+        '<p>Written by Simon Kenny to prove a point... I mean proof of concept! You can get a lot out of just text. Enjoy the simple life yo.</p>'
   })
 }
 

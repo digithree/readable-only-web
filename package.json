@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/digithree/read-only-web-server.git"
+    "url": "https://github.com/digithree/readable-only-web.git"
   },
   "keywords": [
     "node"
@@ -17,9 +17,9 @@
   "author": "Simon Kenny",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/digithree/read-only-web-server"
+    "url": "https://github.com/digithree/readable-only-web"
   },
-  "homepage": "https://github.com/digithree/read-only-web-server",
+  "homepage": "https://github.com/digithree/readable-only-web",
   "dependencies": {
     "atob": "^2.0.3",
     "body-parser": "^1.19.0",
