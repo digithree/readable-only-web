@@ -160,7 +160,9 @@ function constructHomePage() {
         '<li><p>All links will also route through this service, giving you seemless usage. However links may have referral codes, removal in future version.</p></li>' +
         '<li><p>Script injection is still possible, full cleaner coming in future version. Should be more or less okay for now.</p></li></ol>' +
         '<h2>Enjoy!</h2>' +
-        '<p>Written by Simon Kenny to prove a point... I mean proof of concept! You can get a lot out of just text. Enjoy the simple life yo.</p>'
+        '<p>Written by Simon Kenny to prove a point... I mean proof of concept! You can get a lot out of just text. Enjoy the simple life yo.</p>' +
+        '<h3>Source</h3>' +
+        '<p><a href="https://github.com/digithree/readable-only-web">https://github.com/digithree/readable-only-web</a></p>'
   })
 }
 
