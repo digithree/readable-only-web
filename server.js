@@ -124,6 +124,7 @@ function constructArticlePage(article, url) {
 function constructUrlErrorPage(url) {
   return htmlBuilder({
     title: 'Error accessing URL [ROW]',
+    favicon: '/icon/favicon-16x16.png',
     content: '<h2>Error accessing URL [ROW]</h2>' +
         '<p>Could not extract article format for URL: ' + url
   })
@@ -132,6 +133,7 @@ function constructUrlErrorPage(url) {
 function constructSearchlErrorPage(searchTerm) {
   return htmlBuilder({
     title: 'Error performing search [ROW]',
+    favicon: '/icon/favicon-16x16.png',
     content: '<h2>Error performing search [ROW]</h2>' +
         '<p>Could not perform search for term: ' + searchTerm
   })
