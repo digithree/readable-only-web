@@ -3,16 +3,16 @@
   <ShortName>ROW</ShortName>
   <Description>Readable Only Web</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/png">http://row.fr.openode.io/icon/favicon-16x16.png</Image>
-  <Image width="152" height="152" type="image/png">http://row.fr.openode.io/icon/apple-icon-152x152.png</Image>
-  <Image width="32" height="32" type="image/png">http://row.fr.openode.io/icon/favicon-32x32.png</Image>
-  <Image width="128" height="128" type="image/png">http://row.fr.openode.io/icon/icon-128x128.png</Image>
-  <Image width="192" height="192" type="image/png">http://row.fr.openode.io/icon/icon-192x192.png</Image>
-  <Image width="256" height="256" type="image/png">http://row.fr.openode.io/icon/icon-256x256.png</Image>
-  <Image width="384" height="384" type="image/png">http://row.fr.openode.io/icon/icon-384x384.png</Image>
-  <Image width="512" height="512" type="image/png">http://row.fr.openode.io/icon/icon-512x512.png</Image>
-  <Image width="144" height="144" type="image/png">http://row.fr.openode.io/icon/ms-icon-144x144.png</Image>
-  <Url type="text/html" template="http://row.fr.openode.io/search">
+  <Image width="16" height="16" type="image/png">http://row.openode.io/icon/favicon-16x16.png</Image>
+  <Image width="152" height="152" type="image/png">http://row.openode.io/icon/apple-icon-152x152.png</Image>
+  <Image width="32" height="32" type="image/png">http://row.openode.io/icon/favicon-32x32.png</Image>
+  <Image width="128" height="128" type="image/png">http://row.openode.io/icon/icon-128x128.png</Image>
+  <Image width="192" height="192" type="image/png">http://row.openode.io/icon/icon-192x192.png</Image>
+  <Image width="256" height="256" type="image/png">http://row.openode.io/icon/icon-256x256.png</Image>
+  <Image width="384" height="384" type="image/png">http://row.openode.io/icon/icon-384x384.png</Image>
+  <Image width="512" height="512" type="image/png">http://row.openode.io/icon/icon-512x512.png</Image>
+  <Image width="144" height="144" type="image/png">http://row.openode.io/icon/ms-icon-144x144.png</Image>
+  <Url type="text/html" template="http://row.openode.io/search">
     <Param name="q" value="{searchTerms}"/>
   </Url>
 </OpenSearchDescription>

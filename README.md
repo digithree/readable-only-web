@@ -13,7 +13,7 @@ This service applies Mozillas "Readability" standalone code (along with other pr
 
 ## Usage
 
-Add your website in the query parameter "q" for our URL and "url" endpoint, e.g. http://row.fr.openode.io/url?q=http://website.com/some-article
+Add your website in the query parameter "q" for our URL and "url" endpoint, e.g. http://row.openode.io/url?q=http://website.com/some-article
 
 ### Notes
 

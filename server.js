@@ -1,7 +1,7 @@
 'use strict';
 
 // TODO : change this to server address
-const REAL_SERVICE_HOST_ADDR = 'http://row.fr.openode.io'
+const REAL_SERVICE_HOST_ADDR = 'http://row.openode.io'
 // use Duck Duck Go with options (kd) redirect off, (k1) ads off, (ko) header totally off, (kam) OpenStreetMap for directions
 const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kam=osm&q='
 
