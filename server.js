@@ -17,13 +17,9 @@ const S = require('string')
 
 var app = express();
 app.set('port', process.env.PORT || 5000);
-//app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 
-
-app.get('/', function (req, res) {
-  htmlResult(constructHomePage(), res)
-})
 
 app.get('/search', function (req, res) {
   if (!req.query.q) {
@@ -141,30 +137,6 @@ function constructSearchlErrorPage(searchTerm) {
   })
 }
 
-function constructHomePage() {
-  return htmlBuilder({
-    title: 'Getting Started [ROW]',
-    content: '<h2>Getting Started [ROW]</h2>' +
-        '<p>Readable filter for the web. Put distance between your hardware and trackers.</p>' +
-        '<h3>ROW is the Readable Only Web</h3>' +
-        '<blockquote><i>Row, row, row your browser' +
-        '<br>Gently up the stream.' +
-        '<br>Merrily, merrily merrily, merrily,' +
-        '<br>Now your page is clean.</i></blockquote>' +
-        '<p>This service applies Mozillas "Readability" standalone code (along with other processors) to attempt to extract ' +
-        'article text from any give web resource. Will only work for standard articles without access-walls in the current version.</p>' +
-        '<h2>Usage</h2>' +
-        '<p>Add your website in the query parameter "q" for our URL and "url" endpoint, e.g. ' + REAL_SERVICE_HOST_ADDR + '/url?q=http://website.com/some-article' + '</p>' +
-        '<h3>Notes</h3>' +
-        '<ol><li><p>Will show images, which might have tracking built in. Optional removal (with click to reveal) coming in future version.</p></li>' +
-        '<li><p>All links will also route through this service, giving you seemless usage. However links may have referral codes, removal in future version.</p></li>' +
-        '<li><p>Script injection is still possible, full cleaner coming in future version. Should be more or less okay for now.</p></li></ol>' +
-        '<h2>Enjoy!</h2>' +
-        '<p>Written by Simon Kenny to prove a point... I mean proof of concept! You can get a lot out of just text. Enjoy the simple life yo.</p>' +
-        '<h3>Source</h3>' +
-        '<p><a href="https://github.com/digithree/readable-only-web">https://github.com/digithree/readable-only-web</a></p>'
-  })
-}
 
 function htmlResult(htmlText, res) {
   res.set('Content-Type', 'text/html')
