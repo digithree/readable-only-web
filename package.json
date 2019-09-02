@@ -30,6 +30,7 @@
     "moz-readability-node": "0.2.4",
     "node-html-builder": "1.0.2",
     "request": "2.88.0",
-    "string": "3.3.3"
+    "string": "3.3.3",
+    "cheerio": "1.0.0-rc.3"
   }
 }

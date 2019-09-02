@@ -5,6 +5,16 @@ const REAL_SERVICE_HOST_ADDR = 'http://row.openode.io'
 // use Duck Duck Go with options (kd) redirect off, (k1) ads off, (ko) header totally off, (kam) OpenStreetMap for directions
 const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kam=osm&q='
 
+const TAGS_WHITELIST = [
+  'html', 'head', 'body', 'title', 'link', 'div',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'p', 'a', 'span', 'br', 'nobr',
+  'b', 'i', 'u', 'strike', 'sup', 'sub', 'small', 'tt', 'pre', 'blockquote', 'em', 'del', 'code',
+  'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+  'table', 'tr', 'th', 'td', 'caption'
+]
+
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const request = require('request')
@@ -14,6 +24,7 @@ const createDOMPurify = require('dompurify')
 const htmlBuilder = require('node-html-builder')
 const Readability = require('moz-readability-node').Readability
 const S = require('string')
+const cheerio = require('cheerio')
 
 var app = express();
 app.set('port', process.env.PORT || 5000);
@@ -65,16 +76,20 @@ app.get('/url', function (req, res) {
     htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
     return
   }
+  var clean = true
+  if (req.query.noclean) {
+    clean = false
+  }
   var url = req.query.q
   var uri = nodeUrl.parse(req.query.q)
   switch (uri.hostname) {
     // TODO : add exceptional cases based on hostname for click through to article, or additional fetch required, etc.
     default:
-      processUrlDefault(url, res)
+      processUrlDefault(url, res, clean)
   }
 })
 
-function processUrlDefault(url, res) {
+function processUrlDefault(url, res, clean) {
   request.get({
     url: url,
     headers: {'User-Agent': 'request'}
@@ -101,7 +116,8 @@ function processUrlDefault(url, res) {
     var dom = new JSDOM(data, {url: url});
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
-    htmlResult(constructArticlePage(article, url), res)
+    let htmlText = constructArticlePage(article, url)
+    htmlResult(processCleanHtmlOptions(htmlText, url, clean), res)
   })
 }
 
@@ -143,6 +159,40 @@ function constructSearchlErrorPage(searchTerm) {
 function htmlResult(htmlText, res) {
   res.set('Content-Type', 'text/html')
   res.send(htmlText)
+}
+
+function processCleanHtmlOptions(htmlText, url, clean) {
+  const $ = cheerio.load(htmlText)
+  // remove non-whitelisted tags
+  var tagsToRemove = $('*')
+      .get()
+      .map(el => el.name)
+      .filter(el => !TAGS_WHITELIST.includes(el))
+  if (tagsToRemove.length === 0) {
+    return htmlText
+  }
+  let contentDetectionText = '(including' +
+    (tagsToRemove.includes('img') ? ' images;' : '') +
+    (tagsToRemove.includes('embed') ? ' embedded content (video or other);' : '') +
+    (tagsToRemove.includes('iframe') ? ' iframes;' : '') +
+    (tagsToRemove.includes('script') ? ' scripts!!!;' : '') +
+    ')'
+  if (clean) {
+    for (let idx in tagsToRemove) {
+      $(tagsToRemove[idx])
+          .remove()
+    }
+    $('body')
+        .append('<p><strong>Removed rich web content by default ' + contentDetectionText +
+          ', <a href="' + REAL_SERVICE_HOST_ADDR + '/url?noclean=1&q=' + url +
+          '">click here to show this content</a></strong></p>')
+  } else {
+    $('body')
+      .append('<p><strong>Rich web content detected ' + contentDetectionText +
+        ', <a href="' + REAL_SERVICE_HOST_ADDR + '/url?q=' + url +
+        '">click here to show cleaned version</a></strong></p>')
+  }
+  return $.html()
 }
 
 // Start server
