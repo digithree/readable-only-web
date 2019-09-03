@@ -17,6 +17,8 @@ const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kp=-2&kz
 const DDG_SEARCH_ADDR = 'https://duckduckgo.com/html/?q='
 const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 
+const TITLE_APPEND_SIG = ' [via ROW]'
+
 const TAGS_WHITELIST = [
   'html', 'head', 'body', 'title', 'link', 'div', 'article', 'section', 'meta', 'main', 'header',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -74,6 +76,9 @@ app.get('/', function (req, res) {
     var html = htmlBuilder({
       title: 'Readble Only Web',
       favicon: '/icon/favicon-16x16.png',
+      links: [
+        '/main.css'
+      ],
       content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + converter.makeHtml(data)
     })
     res.send(html);
@@ -191,7 +196,7 @@ function constructSearchPage(article, url) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url)
   }
-  var title = article.title + ' [ROW]'
+  var title = article.title + TITLE_APPEND_SIG
   var updatedContentHtml = S(article.content)
       .replaceAll(
         'href="http',
@@ -199,6 +204,9 @@ function constructSearchPage(article, url) {
       ).toString()
   return htmlBuilder({
     title: title,
+    links: [
+      '/main.css'
+    ],
     content: HTML_SEARCH_BAR + '<hr/><h1>' + title + '</h1>' + updatedContentHtml
   })
 }
@@ -207,7 +215,7 @@ function constructArticlePage(article, url) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url)
   }
-  var title = article.title + ' [ROW]'
+  var title = article.title + TITLE_APPEND_SIG
   var updatedContentHtml = S(article.content)
       .replaceAll(
         'href="http',
@@ -215,24 +223,33 @@ function constructArticlePage(article, url) {
       ).toString()
   return htmlBuilder({
     title: title,
+    links: [
+      '/main.css'
+    ],
     content: '<h1>' + title + '</h1>' + updatedContentHtml
   })
 }
 
 function constructUrlErrorPage(url) {
   return htmlBuilder({
-    title: 'Error accessing URL [ROW]',
+    title: 'Error accessing URL' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    content: '<h2>Error accessing URL [ROW]</h2>' +
+    links: [
+      '/main.css'
+    ],
+    content: '<h2>Error accessing URL</h2>' +
         '<p>Could not extract article format for URL: ' + url
   })
 }
 
 function constructSearchlErrorPage(searchTerm) {
   return htmlBuilder({
-    title: 'Error performing search [ROW]',
+    title: 'Error performing search' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    content: '<h2>Error performing search [ROW]</h2>' +
+    links: [
+      '/main.css'
+    ],
+    content: '<h2>Error performing search</h2>' +
         '<p>Could not perform search for term: ' + searchTerm
   })
 }

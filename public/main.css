@@ -1,0 +1,35 @@
+main {
+  max-width: 38rem;
+  padding: 2rem;
+  margin: auto;
+}
+
+body {
+  background-color: wheat;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: darkslategray;
+  font-family: Baskerville, Garamond, serif;
+}
+
+p, ol, ul {
+  color: #113322;
+  font-family: Baskerville, Garamond, serif;
+}
+
+a:link {
+  color: darkcyan; text-decoration: underline;
+}
+
+a:active {
+  color: royalblue; text-decoration: underline;
+}
+
+a:visited {
+  color: olivedrab; text-decoration: underline;
+}
+
+a:hover {
+  color: salmon; text-decoration: none;
+}
