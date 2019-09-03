@@ -14,6 +14,9 @@ const REAL_SERVICE_HOST_ADDR = 'https://row.openode.io'
 //    (kam) OpenStreetMap for directions
 const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kp=-2&kz=-1&kc=-1&kav=-1&kaf=1&kac=-1&kam=osm&q='
 
+const DDG_SEARCH_ADDR = 'https://duckduckgo.com/html/?q='
+const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
+
 const TAGS_WHITELIST = [
   'html', 'head', 'body', 'title', 'link', 'div', 'article', 'section', 'meta', 'main', 'header',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -49,6 +52,18 @@ app.get('/search', function (req, res) {
   // TODO : add actual query here
   //htmlResult(constructSearchlErrorPage('PLACEHOLDER, search is not yet implemented'), res)
   var searchTerm = req.query.q
+  if (searchTerm.startsWith('!')) {
+    let parts = searchTerm.split(' ')
+    if (parts.length > 1) {
+      if (parts[0].localeCompare('!ddg') === 0) {
+        res.redirect(DDG_SEARCH_ADDR + encodeURI(searchTerm.substring(parts[0].length + 1)))
+        return
+      } else if (parts[0].localeCompare('!google') === 0) {
+        res.redirect(GOOGLE_SEARCH_ADDR + encodeURI(searchTerm.substring(parts[0].length + 1)))
+        return
+      }
+    }
+  }
   var url = SEARCH_API_ADDR + encodeURI(searchTerm)
   request.get({
     url: url,
