@@ -20,11 +20,28 @@ const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 const TAGS_WHITELIST = [
   'html', 'head', 'body', 'title', 'link', 'div', 'article', 'section', 'meta', 'main', 'header',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'p', 'a', 'span', 'br', 'nobr',
+  'p', 'a', 'span', 'br', 'nobr', 'hr',
   'b', 'i', 'u', 'strike', 'sup', 'sub', 'small', 'tt', 'pre', 'blockquote', 'em', 'del', 'code', 'strong',
   'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-  'table', 'tr', 'th', 'td', 'caption'
+  'table', 'tr', 'th', 'td', 'caption',
+  'form', 'input', 'button'
 ]
+
+const HTML_SEARCH_BAR = `
+    <h4>Search</h4>
+    <form method="get" action="/search">
+      <input type="text" name="q" size="40">
+      <button type="submit">Search</button>
+    </form>
+    `
+
+const HTML_URL_BAR = `
+    <h4>Go to URL</h4>
+    <form method="get" action="/url">
+      <input type="text" name="q" size="40">
+      <button type="submit">Go</button>
+    </form>
+    `
 
 
 const express = require('express')
@@ -37,12 +54,31 @@ const htmlBuilder = require('node-html-builder')
 const Readability = require('moz-readability-node').Readability
 const S = require('string')
 const cheerio = require('cheerio')
+const showdown = require('showdown')
+const fs = require("fs")
 
 var app = express();
 app.set('port', process.env.PORT || 5000);
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 
+
+app.get('/', function (req, res) {
+  fs.readFile('./README.md', 'utf8', function (err, data) {
+    if (err) {
+      htmlResult(constructSearchlErrorPage('Couldnt read index file'), res)
+      return
+    }
+    var converter = new showdown.Converter();
+    converter.setOption('noHeaderId', 'true');
+    var html = htmlBuilder({
+      title: 'Readble Only Web',
+      favicon: '/icon/favicon-16x16.png',
+      content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + converter.makeHtml(data)
+    })
+    res.send(html);
+  })
+})
 
 app.get('/search', function (req, res) {
   if (!req.query.q) {
@@ -64,6 +100,7 @@ app.get('/search', function (req, res) {
       }
     }
   }
+  var options = getOptionsFromQueryObj(req.query)
   var url = SEARCH_API_ADDR + encodeURI(searchTerm)
   request.get({
     url: url,
@@ -88,10 +125,15 @@ app.get('/search', function (req, res) {
     var cleanDom = new JSDOM(cleanHtmlText, {url: url});
     let reader = new Readability(cleanDom.window.document);
     */
-    var dom = new JSDOM(data, {url: url});
+    // fix for zero click results getting through for DDG search, remove via known div and class
+    const $ = cheerio.load(data)
+    $('div.zci-wrapper').remove()
+    var preProcessHtml = $.html()
+    var dom = new JSDOM(preProcessHtml, {url: url});
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
-    htmlResult(constructArticlePage(article, url), res)
+    let htmlText = constructSearchPage(article, url)
+    htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
 })
 
@@ -142,6 +184,22 @@ function processUrlDefault(url, res, options) {
     let article = reader.parse();
     let htmlText = constructArticlePage(article, url)
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
+  })
+}
+
+function constructSearchPage(article, url) {
+  if (article === undefined || article == null) {
+    return constructUrlErrorPage(url)
+  }
+  var title = article.title + ' [ROW]'
+  var updatedContentHtml = S(article.content)
+      .replaceAll(
+        'href="http',
+        'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
+      ).toString()
+  return htmlBuilder({
+    title: title,
+    content: HTML_SEARCH_BAR + '<hr/><h1>' + title + '</h1>' + updatedContentHtml
   })
 }
 
@@ -209,7 +267,6 @@ function processCleanHtmlOptions(htmlText, url, options) {
         }
         return false
       })
-  console.log(tagsToRemove)
   for (let idx in tagsToRemove) {
     $(tagsToRemove[idx])
         .remove()
