@@ -1,15 +1,24 @@
 'use strict';
 
-// TODO : change this to server address
+// endpoint parameter options:
+//    imgs= 1 for On, -1 for off
+//    embeds= 1 for On, -1 for off
+//    iframes= 1 for On, -1 for off
+//    othertags= 1 for On, -1 for off
+//    q= search term or URL
 const REAL_SERVICE_HOST_ADDR = 'https://row.openode.io'
-// use Duck Duck Go with options (kd) redirect off, (k1) ads off, (ko) header totally off, (kam) OpenStreetMap for directions
-const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kam=osm&q='
+
+// use Duck Duck Go with options (kd=-1) redirect off, (k1=-1) ads off, (ko=-2) header totally off,
+//    (kp=-2) Safe search off, (kz=-1) instant answers off, (kc=-1) auto-load images off,
+//    (kav=-1) auto-load results off, (kaf=1) full URLS, (kac=-1) auto-suggest off,
+//    (kam) OpenStreetMap for directions
+const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kp=-2&kz=-1&kc=-1&kav=-1&kaf=1&kac=-1&kam=osm&q='
 
 const TAGS_WHITELIST = [
-  'html', 'head', 'body', 'title', 'link', 'div',
+  'html', 'head', 'body', 'title', 'link', 'div', 'article', 'section', 'meta', 'main', 'header',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'p', 'a', 'span', 'br', 'nobr',
-  'b', 'i', 'u', 'strike', 'sup', 'sub', 'small', 'tt', 'pre', 'blockquote', 'em', 'del', 'code',
+  'b', 'i', 'u', 'strike', 'sup', 'sub', 'small', 'tt', 'pre', 'blockquote', 'em', 'del', 'code', 'strong',
   'ul', 'ol', 'li', 'dl', 'dt', 'dd',
   'table', 'tr', 'th', 'td', 'caption'
 ]
@@ -76,7 +85,7 @@ app.get('/url', function (req, res) {
     htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
     return
   }
-  var clean = true
+  var options = getOptionsFromQueryObj(req.query)
   if (req.query.noclean) {
     clean = false
   }
@@ -85,11 +94,11 @@ app.get('/url', function (req, res) {
   switch (uri.hostname) {
     // TODO : add exceptional cases based on hostname for click through to article, or additional fetch required, etc.
     default:
-      processUrlDefault(url, res, clean)
+      processUrlDefault(url, res, options)
   }
 })
 
-function processUrlDefault(url, res, clean) {
+function processUrlDefault(url, res, options) {
   request.get({
     url: url,
     headers: {'User-Agent': 'request'}
@@ -117,7 +126,7 @@ function processUrlDefault(url, res, clean) {
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
     let htmlText = constructArticlePage(article, url)
-    htmlResult(processCleanHtmlOptions(htmlText, url, clean), res)
+    htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
 }
 
@@ -155,44 +164,114 @@ function constructSearchlErrorPage(searchTerm) {
   })
 }
 
-
 function htmlResult(htmlText, res) {
   res.set('Content-Type', 'text/html')
   res.send(htmlText)
 }
 
-function processCleanHtmlOptions(htmlText, url, clean) {
+function processCleanHtmlOptions(htmlText, url, options) {
   const $ = cheerio.load(htmlText)
   // remove non-whitelisted tags
   var tagsToRemove = $('*')
       .get()
       .map(el => el.name)
       .filter(el => !TAGS_WHITELIST.includes(el))
-  if (tagsToRemove.length === 0) {
-    return htmlText
+      .filter(tag => {
+        if (!options.imgs && tag.localeCompare('img') === 0) {
+          return true
+        }
+        if (!options.embeds && tag.localeCompare('embed') === 0) {
+          return true
+        }
+        if (!options.iframes && tag.localeCompare('iframe') === 0) {
+          return true
+        }
+        if (!options.othertags &&
+            tag.localeCompare('img') !== 0 &&
+            tag.localeCompare('embed') !== 0 &&
+            tag.localeCompare('iframe') !== 0) {
+          return true
+        }
+        return false
+      })
+  console.log(tagsToRemove)
+  for (let idx in tagsToRemove) {
+    $(tagsToRemove[idx])
+        .remove()
   }
-  let contentDetectionText = '(including' +
-    (tagsToRemove.includes('img') ? ' images;' : '') +
-    (tagsToRemove.includes('embed') ? ' embedded content (video or other);' : '') +
-    (tagsToRemove.includes('iframe') ? ' iframes;' : '') +
-    (tagsToRemove.includes('script') ? ' scripts!!!;' : '') +
-    ')'
-  if (clean) {
-    for (let idx in tagsToRemove) {
-      $(tagsToRemove[idx])
-          .remove()
-    }
-    $('body')
-        .append('<p><strong>Removed rich web content by default ' + contentDetectionText +
-          ', <a href="' + REAL_SERVICE_HOST_ADDR + '/url?noclean=1&q=' + url +
-          '">click here to show this content</a></strong></p>')
-  } else {
-    $('body')
-      .append('<p><strong>Rich web content detected ' + contentDetectionText +
-        ', <a href="' + REAL_SERVICE_HOST_ADDR + '/url?q=' + url +
-        '">click here to show cleaned version</a></strong></p>')
-  }
+  $('body')
+      .append(createStandardFooter(url, options))
   return $.html()
+}
+
+function createStandardFooter(url, options) {
+  var encodedUrl = encodeURIComponent(url)
+  let footerHtml = '<hr/><p>Viewing: '
+  if (options.imgs) {
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: false}) + '">[x]</a> with images'
+  } else {
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: true}) + '">[ ]</a> with images'
+  }
+  if (options.embeds) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: false}) + '">[x]</a> with embeds'
+  } else {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: true}) + '">[ ]</a> with embeds'
+  }
+  if (options.iframes) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: false}) + '">[x]</a> with iframes'
+  } else {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: true}) + '">[ ]</a> with iframes'
+  }
+  if (options.othertags) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: false}) + '">[x]</a> with other blacklisted tags'
+  } else {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: true}) + '">[ ]</a> with other blacklisted tags'
+  }
+  footerHtml += '</p><p>Actions: <a href="' + constructInternalUrl('url', encodedUrl, {imgs: true, embeds: true, iframes: true, othertags: true}) +
+      '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
+      ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
+  return footerHtml
+}
+
+function constructInternalUrl(endpoint, query, options, overrideOptions) {
+  let internalUrl = REAL_SERVICE_HOST_ADDR + '/' + endpoint + '?'
+  let addedAtLeastOne = false
+  Object.keys(options).forEach(function(key, index) {
+    let value = options[key]    
+    if (overrideOptions !== undefined &&
+        overrideOptions != null &&
+        Object.prototype.hasOwnProperty.call(overrideOptions, key)) {
+      value = overrideOptions[key]
+    }
+    if (addedAtLeastOne) {
+      internalUrl += '&'
+    }
+    internalUrl += key + '=' + (value ? '1' : '-1')
+    addedAtLeastOne = true
+  });
+  if (addedAtLeastOne) {
+    internalUrl += '&'
+  }
+  internalUrl += 'q=' + query
+  return internalUrl
+}
+
+function getOptionsFromQueryObj(queryParams) {
+  let options = {
+    imgs: false,
+    embeds: false,
+    iframes: false,
+    othertags: false
+  }
+  if (queryParams === undefined || queryParams == null) {
+    return options
+  }
+  Object.keys(options).forEach(function(key, index) {
+    if (Object.prototype.hasOwnProperty.call(queryParams, key)) {
+      options[key] = queryParams[key] == 1
+    }
+  })
+  return options
 }
 
 // Start server
