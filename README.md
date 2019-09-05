@@ -24,7 +24,8 @@ It's basic and simple to use, and appropriate if you're just interested in the t
 >
 > _Now your page is clean._
 
-![ROW Canoe logo](/icon/icon-128x128.png)
+![.](/icon/icon-128x128.png)
+![.](/public/icon/icon-128x128.png)
 
 _Note, this image is served by ROW service (or GitHub if viewing readme there)_
 
@@ -44,9 +45,14 @@ You'll see a footer with these options appended to the page rendering where avai
 
 The only form elements allowed are the search and go to URL bars that appear on this page and are added to the search page results at the top.
 
+#### Bonus points
+
+* retro WWW feel
+* looks great in Lynx terminal browser
+
 ### Why was this made?
 
-It's clear that web pages have lost the run of themselves, and browsers have failed to step in decisively. All major browsers (yes, even "privacy first" Firefox) are implicitly committed to facilitating any number of tracking methods _on your machine_ by supporting current web conventions.. See below for a summary of some examples of what ROW blocks.
+It's clear that web pages have lost the run of themselves, and browsers have failed to step in decisively. All major browsers (yes, even "privacy first" Firefox) are implicitly committed to facilitating any number of tracking methods _on your machine_ by supporting current web conventions. See below for a summary of some examples of what ROW blocks.
 
 We need to get to a web where acceptance of the advertisers bottom line is not traded in for providing rich media experiences and modern functionality. Every time you are forced to accept cookies just to use a site (or have given up in the fact of the new pop up epidemic and just accept everything, as I imagine many do) you are given a false choice. ROW is an experiment in rejecting that false choice. It also protects you against the powerful and useful, but ultimately ungoverned power of the JavaScript engine, which is most often not a choice at all.
 
@@ -75,7 +81,7 @@ Known exceptions:
 
 ### Limitations
 
-As ROW uses a kind of fancy proxy version of Firefox's Readability mode, the best results come from articles and search results.
+As ROW is essentially Firefox's Readability mode with additional cleaning on top of a proxy, the best results come from articles and search results.
 
 It will not work at all for:
 
@@ -86,13 +92,13 @@ It will not work at all for:
 
 ### Caveats, admissions and disclaimers
 
-I cannot formally guarantee that ROW will protect you, but it is an _experimental tool_ to further that goal. I also cannot guarantee that it is legal in your area, though I see no reason why it should not be. Use it at your own risk, of course, just like anything else.
+I cannot formally guarantee that ROW will protect you from tracking, but it is an _experimental tool_ to further that goal. I also cannot guarantee that it is legal in your area, though I see no reason why it should not be. Use it at your own risk, of course, just like anything else.
 
 #### Regarding the OpeNode server
 
-There is a test deployment currently sitting at [https://row.openode.io](https://row.openode.io) which is open for anyone to use. I use it myself. Of course if you use it I could see your IP address and what you're using it for. I don't want to and don't intend to, but you'd be foolish to rule it out, you don't know me.
+There is a test deployment currently sitting at [https://row.openode.io](https://row.openode.io) which is open for anyone to use. I use it myself. Of course if you use it I (or employees of OpeNode) could see your IP address and what you're using it for. I don't want to and don't intend to, but you'd be foolish to rule it out, you don't know me.
 
-So, you are encouraged to set up your own little server, it's pretty straight forward to do and there's some info further in this readme. The more people using a single server the better, but up to a point as no server should have too much data logged by the service. I'm not sure what the ideal point is but assume your usage is being monitored by the service, though that should not translate into advertising tracking.
+So, you are encouraged to set up your own little server, it's pretty straight forward to do and there's some info further in this readme. The more people using a single server the better, but up to a point as no server should have too much data logged by the service. I'm not sure what the ideal balance point is but you should assume your usage is being monitored by the service, although that should not translate into advertising tracking.
 
 #### Regarding Duck Duck Go
 
@@ -106,7 +112,7 @@ I may change them in the future if it seems wise to do so, but for now branding 
 
 #### The ethics of radical tracker blocking
 
-There are some who will argue that it is ethically wrong to block cookies as there is an implicit (or even sometimes an attempted explicit) contract to allow tracking in exchange for viewing content. In my opinion that's a bad deal and one that shouldn't have to be made anyway. If, as a website, you want to restrict your content, by all means do so. You cannot fault someone querying a resource on an free channel in a reasonable manner.
+There are some who will argue that it is ethically wrong to block cookies as there is an implicit (or even explicit) contract to allow tracking in exchange for viewing content. In my opinion that's a bad deal. If, as a website, you want to restrict your content, by all means do so. You cannot fault someone querying a resource on an free and open channel in a reasonable manner if you provide it.
 
 There are also grounds to argue that services like ROW obstruct the ability of sites to manage their GDPR responsibilities to visitors. As far as I know, any resource on the web that can be fetched is fair game to see as it is, and if no personal data is transferred to them in this fetch, there is no responsibility on their part to manage any data on fetchers. Correct me if I'm wrong, please.
 
