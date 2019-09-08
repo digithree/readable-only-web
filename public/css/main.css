@@ -1,17 +1,5 @@
-.row-home {
+.row-content {
   max-width: 52rem;
-  padding: 2rem;
-  margin: 0 auto;
-}
-
-.row-search-results {
-  max-width: 52rem;
-  padding: 2rem;
-  margin: 0 auto;
-}
-
-.row-article {
-  max-width: 38rem;
   padding: 2rem;
   margin: 0 auto;
 }
@@ -21,13 +9,49 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: darkslategray;
-  font-family: Baskerville, Garamond, serif;
-}
-
-p, ol, ul {
   color: #113322;
   font-family: Baskerville, Garamond, serif;
+  line-height: 1.5;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 150%;
+}
+
+h2 {
+  font-size: 130%;
+}
+
+h3 {
+  font-size: 120%;
+}
+
+h4 {
+  font-size: 115%;
+}
+
+h5 {
+  font-size: 110%;
+}
+
+h6 {
+  font-size: 105%;
+}
+
+p, li {
+  color: #113322;
+  font-family: Bitter ht, Baskerville, Garamond, serif;
+  line-height: 1.5;
+}
+
+p {
+  margin-top: 1.5rem;
+}
+
+li {
+  margin-top: 0.5rem;
 }
 
 a:link {

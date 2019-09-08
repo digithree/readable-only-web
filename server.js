@@ -135,7 +135,7 @@ app.get('/', function (req, res) {
       title: 'Readble Only Web',
       favicon: '/icon/favicon-16x16.png',
       links: PAGE_LINK_HEADER_MAIN,
-      content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + wrapHomeHtmlContentForStyling(converter.makeHtml(data))
+      content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + wrapHtmlContentForStyling(converter.makeHtml(data))
     })
     res.send(html);
   })
@@ -288,7 +288,7 @@ function constructSearchPage(searchTerm, article, url) {
         'href="http',
         'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
       ).toString()
-  htmlText = HTML_SEARCH_BAR + '<hr/>' + wrapSearchHtmlContentForStyling('<h1>' + title + '</h1>' + htmlText)
+  htmlText = HTML_SEARCH_BAR + '<hr/>' + wrapHtmlContentForStyling('<h1>' + title + '</h1>' + htmlText)
   return htmlBuilder({
     title: title,
     links: PAGE_LINK_HEADER_ANY,
@@ -310,7 +310,7 @@ function constructArticlePage(article, url) {
   return htmlBuilder({
     title: title,
     links: PAGE_LINK_HEADER_ANY,
-    content: wrapArticleHtmlContentForStyling(htmlText)
+    content: wrapHtmlContentForStyling(htmlText)
   })
 }
 
@@ -448,16 +448,8 @@ function updateServiceHostname(req) {
   REAL_SERVICE_HOST_ADDR = '//' + req.get('host')
 }
 
-function wrapHomeHtmlContentForStyling(htmlText) {
-  return '<div class="row-home">' + htmlText + '</div>'
-}
-
-function wrapSearchHtmlContentForStyling(htmlText) {
-  return '<div class="row-search-results">' + htmlText + '</div>'
-}
-
-function wrapArticleHtmlContentForStyling(htmlText) {
-  return '<div class="row-article">' + htmlText + '</div>'
+function wrapHtmlContentForStyling(htmlText) {
+  return '<div class="row-content">' + htmlText + '</div>'
 }
 
 // Start server
