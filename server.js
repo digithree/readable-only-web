@@ -81,6 +81,11 @@ app.use(bodyParser.json());
 
 
 app.get('/', function (req, res) {
+  if (req.query.q !== undefined && req.query.q != null) {
+    // treat as search request if has query param, redirect
+    doSearch(req.query.q, res, getOptionsFromQueryObj(req.query))
+    return
+  }
   fs.readFile('./README.md', 'utf8', function (err, data) {
     if (err) {
       htmlResult(constructSearchlErrorPage('Couldnt read index file'), res)
@@ -105,6 +110,10 @@ app.get('/search', function (req, res) {
   }
   var options = getOptionsFromQueryObj(req.query)
   var searchTerm = req.query.q
+  doSearch(searchTerm, res, options)
+})
+
+function doSearch(searchTerm, res, options) {
   if (searchTerm.startsWith('!')) {
     let parts = searchTerm.split(' ')
     if (parts.length > 1) {
@@ -154,7 +163,7 @@ app.get('/search', function (req, res) {
     let htmlText = constructSearchPage(article, url)
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
-})
+}
 
 app.get('/url', function (req, res) {
   if (!req.query.q) {
