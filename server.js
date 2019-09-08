@@ -153,9 +153,10 @@ function doSearch(searchTerm, res, options) {
     var cleanDom = new JSDOM(cleanHtmlText, {url: url});
     let reader = new Readability(cleanDom.window.document);
     */
-    // fix for zero click results getting through for DDG search, remove via known div and class
     const $ = cheerio.load(data)
-    $('div.zci-wrapper').remove()
+    $('div.zci-wrapper').remove() // fix for zero click results getting through for DDG search, remove via known div and class
+    $('div.msg').remove()
+    $('div.msg--spelling').remove() // fix misspelling / did you mean UI obstructing articlization of search results page
     var preProcessHtml = $.html()
     var dom = new JSDOM(preProcessHtml, {url: url});
     let reader = new Readability(dom.window.document);
