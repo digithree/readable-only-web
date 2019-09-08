@@ -1,11 +1,23 @@
-main {
+.row-home {
+  max-width: 52rem;
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.row-search-results {
+  max-width: 52rem;
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.row-article {
   max-width: 38rem;
   padding: 2rem;
-  margin: auto;
+  margin: 0 auto;
 }
 
 body {
-  background-color: wheat;
+  background-color: white;
 }
 
 h1, h2, h3, h4, h5, h6 {
