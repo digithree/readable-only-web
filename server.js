@@ -6,7 +6,7 @@
 //    iframes= 1 for On, -1 for off
 //    othertags= 1 for On, -1 for off
 //    q= search term or URL
-const REAL_SERVICE_HOST_ADDR = 'https://row.openode.io'
+var REAL_SERVICE_HOST_ADDR = 'localhost:5000' //default
 
 // use Duck Duck Go with options (kd=-1) redirect off, (k1=-1) ads off, (ko=-2) header totally off,
 //    (kp=-2) Safe search off, (kz=-1) instant answers off, (kc=-1) auto-load images off,
@@ -74,13 +74,14 @@ const cheerio = require('cheerio')
 const showdown = require('showdown')
 const fs = require("fs")
 
-var app = express();
-app.set('port', process.env.PORT || 5000);
-app.use(express.static(__dirname + '/public'));
-app.use(bodyParser.json());
+var app = express()
+app.set('port', process.env.PORT || 5000)
+app.use(express.static(__dirname + '/public'))
+app.use(bodyParser.json())
 
 
 app.get('/', function (req, res) {
+  updateServiceHostname(req)
   if (req.query.q !== undefined && req.query.q != null) {
     // treat as search request if has query param, redirect
     doSearch(req.query.q, res, getOptionsFromQueryObj(req.query))
@@ -104,6 +105,7 @@ app.get('/', function (req, res) {
 })
 
 app.get('/search', function (req, res) {
+  updateServiceHostname(req)
   if (!req.query.q) {
     htmlResult(constructSearchlErrorPage('NONE GIVEN, invalid search term'), res)
     return
@@ -162,6 +164,7 @@ function doSearch(searchTerm, res, options) {
 }
 
 app.get('/url', function (req, res) {
+  updateServiceHostname(req)
   if (!req.query.q) {
     htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
     return
@@ -376,6 +379,11 @@ function getOptionsFromQueryObj(queryParams) {
     }
   })
   return options
+}
+
+function updateServiceHostname(req) {
+  // note, explicit protocol use is not required here, just use // and let browser figure it out
+  REAL_SERVICE_HOST_ADDR = '//' + req.get('host')
 }
 
 // Start server
