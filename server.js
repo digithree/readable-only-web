@@ -396,7 +396,7 @@ function createStandardFooter(url, options) {
   } else {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: true}) + '">[ ]</a> with other blacklisted tags'
   }
-  footerHtml += '</p><p>Actions: <a href="' + constructInternalUrl('url', encodedUrl, {imgs: true, embeds: true, iframes: true, othertags: true}) +
+  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: true, embeds: true, iframes: true, othertags: true}) +
       '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
   return footerHtml
