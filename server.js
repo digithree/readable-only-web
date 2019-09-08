@@ -103,8 +103,7 @@ app.get('/search', function (req, res) {
     htmlResult(constructSearchlErrorPage('NONE GIVEN, invalid search term'), res)
     return
   }
-  // TODO : add actual query here
-  //htmlResult(constructSearchlErrorPage('PLACEHOLDER, search is not yet implemented'), res)
+  var options = getOptionsFromQueryObj(req.query)
   var searchTerm = req.query.q
   if (searchTerm.startsWith('!')) {
     let parts = searchTerm.split(' ')
@@ -115,10 +114,12 @@ app.get('/search', function (req, res) {
       } else if (parts[0].localeCompare('!google') === 0) {
         res.redirect(GOOGLE_SEARCH_ADDR + encodeURI(searchTerm.substring(parts[0].length + 1)))
         return
+      } else if (parts[0].localeCompare('!url') === 0) {
+        res.redirect('/url?q=' + encodeURI(searchTerm.substring(parts[0].length + 1)))
+        return
       }
     }
   }
-  var options = getOptionsFromQueryObj(req.query)
   var url = SEARCH_API_ADDR + encodeURI(searchTerm)
   request.get({
     url: url,
@@ -165,13 +166,17 @@ app.get('/url', function (req, res) {
     clean = false
   }
   var url = req.query.q
-  var uri = nodeUrl.parse(req.query.q)
+  processUrl(url, res, options)
+})
+
+function processUrl(url, res, options) {
+  var uri = nodeUrl.parse(url)
   switch (uri.hostname) {
     // TODO : add exceptional cases based on hostname for click through to article, or additional fetch required, etc.
     default:
       processUrlDefault(url, res, options)
   }
-})
+}
 
 function processUrlDefault(url, res, options) {
   request.get({
