@@ -138,29 +138,24 @@ function doSearch(searchTerm, res, options) {
       htmlResult(constructSearchlErrorPage(searchTerm), res)
       return
     }
-    // TODO : add in DOMPurify usage!
-    /*
-    var dirtyDom = new JSDOM(data, {url: url});
-    var DOMPurify = createDOMPurify(dirtyDom.window);
-    let cleanHtmlText = DOMPurify.sanitize(dirtyDom);
-    console.log('cleanHtmlText:')
-    var output = '';
-    for (var property in cleanHtmlText) {
-      output += property + ': ' + cleanHtmlText[property]+'; ';
-    }
-    console.log(output);
-    //console.log(JSON.stringify(cleanHtmlText, null, 4))
-    var cleanDom = new JSDOM(cleanHtmlText, {url: url});
-    let reader = new Readability(cleanDom.window.document);
-    */
-    const $ = cheerio.load(data)
+    // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
+    const window = (new JSDOM('')).window;
+    const DOMPurify = createDOMPurify(window);
+    let cleanHtmlText = DOMPurify.sanitize(data);
+
+    // fix DDG issues
+    const $ = cheerio.load(cleanHtmlText)
     $('div.zci-wrapper').remove() // fix for zero click results getting through for DDG search, remove via known div and class
     $('div.msg').remove()
     $('div.msg--spelling').remove() // fix misspelling / did you mean UI obstructing articlization of search results page
     var preProcessHtml = $.html()
+
+    // process DOM and articlize
     var dom = new JSDOM(preProcessHtml, {url: url});
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
+
+    // construct HTML to return to browser
     let htmlText = constructSearchPage(article, url)
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
@@ -197,24 +192,17 @@ function processUrlDefault(url, res, options) {
       htmlResult(constructUrlErrorPage(url), res)
       return
     }
-    // TODO : add in DOMPurify usage!
-    /*
-    var dirtyDom = new JSDOM(data, {url: url});
-    var DOMPurify = createDOMPurify(dirtyDom.window);
-    let cleanHtmlText = DOMPurify.sanitize(dirtyDom);
-    console.log('cleanHtmlText:')
-    var output = '';
-    for (var property in cleanHtmlText) {
-      output += property + ': ' + cleanHtmlText[property]+'; ';
-    }
-    console.log(output);
-    //console.log(JSON.stringify(cleanHtmlText, null, 4))
-    var cleanDom = new JSDOM(cleanHtmlText, {url: url});
-    let reader = new Readability(cleanDom.window.document);
-    */
-    var dom = new JSDOM(data, {url: url});
+    // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
+    const window = (new JSDOM('')).window;
+    const DOMPurify = createDOMPurify(window);
+    let cleanHtmlText = DOMPurify.sanitize(data);
+
+    // process DOM and articlize
+    var dom = new JSDOM(cleanHtmlText, {url: url});
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
+    
+    // construct HTML to return to browser
     let htmlText = constructArticlePage(article, url)
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
