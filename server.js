@@ -19,6 +19,39 @@ const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 
 const TITLE_APPEND_SIG = ' [via ROW]'
 
+// should force lowercase to comparing
+const QUERY_PARAM_BLACKLIST_EXACT = [
+  // Facebook
+  'ad_id', 'adset_id', 'campaign_id', 'ad_name', 'adset_name', 'campaign_name', 'placement', 'site_source_name',
+  // Hubspot
+  '_hsenc', '_hsenc',
+  // MailChimp
+  'mc_cid', 'mc_eid',
+  // Simple Reach
+  'sr_share',
+  // Vero
+  'vero_conv', 'vero_id',
+  // Misc and unknown but suggested by Neat URL
+  '_openstat', '_trkparms', '77campaign', 'action_type_', 'adid', 'adserverid',
+  'adserveroptimizerid', 'adtype', 'adurl', 'aff_platform', 'aff_trace_key',
+  'campaignid', 'clickid', 'clkulrenc', 'fb_', 'fbclid', 'feeditemid', 'first_visit', 'forward',
+  'fromemail', 'gclid', 'goaltype', 'gws_rd', 'impressionguid', 'mailid', 'midtoken',
+  'nr_email_referer', 'ncid', 'origin', 'piggiebackcookie', 'pk_campaign', 'pk_kwd',
+  'pubclick', 'pubid', 'recipientid', 'refsrc', 'ref', 'siteid', 'spjobid', 'spmailingid', 'spreportid', 'spuserid',
+  'terminal_id', 'trackid', 'tracking', 'transabtest', 'trk', 'trkemail', 'ws_ab_test', 'yclid'
+]
+
+// apply wildcard to end of these query params
+const QUERY_PARAM_BLACKLIST_WILDCARD = [
+  // Google
+  'utm_',
+  // Markto
+  'mkt_',
+  // Misc and unknown but suggested by Neat URL
+  'action_object_', 'action_ref_', 'adset_', 'affiliate', 'campaign_', 'ga_', 'gs_', 'loc_', 'pd_rd_', 'pf_rd_', 'tt_'
+]
+
+
 const TAGS_WHITELIST = [
   'html', 'head', 'body', 'title', 'link', 'div', 'article', 'section', 'meta', 'main', 'header',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -179,6 +212,29 @@ app.get('/url', function (req, res) {
 
 function processUrl(url, res, options) {
   var uri = nodeUrl.parse(url)
+  // remove any blacklisted params
+  var toRemove = []
+  var searchParams = new URLSearchParams(uri.search)
+  searchParams.forEach((value, name, searchParams) => {
+    if (QUERY_PARAM_BLACKLIST_EXACT.includes(name)) {
+      toRemove.push(name)
+    }
+    for (var wildcardParam in QUERY_PARAM_BLACKLIST_WILDCARD) {
+      if (name.startsWith(QUERY_PARAM_BLACKLIST_WILDCARD[wildcardParam])) {
+        toRemove.push(name)
+        break
+      }
+    }
+  })
+  for (var param in toRemove) {
+    searchParams.delete(toRemove[param])
+  }
+  var searchParamsStr = ''
+  if (searchParams.toString().length > 0) {
+    searchParamsStr = '?' + searchParams.toString()
+  }
+  uri = nodeUrl.parse(S(url).replaceAll(uri.search, searchParamsStr).toString())
+  // condition on hostname to apply any specific adapter before processing content
   switch (uri.hostname) {
     // TODO : add exceptional cases based on hostname for click through to article, or additional fetch required, etc.
     default:
