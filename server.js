@@ -156,7 +156,7 @@ function doSearch(searchTerm, res, options) {
     let article = reader.parse();
 
     // construct HTML to return to browser
-    let htmlText = constructSearchPage(article, url)
+    let htmlText = constructSearchPage(searchTerm, article, url)
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
 }
@@ -208,11 +208,18 @@ function processUrlDefault(url, res, options) {
   })
 }
 
-function constructSearchPage(article, url) {
+function constructSearchPage(searchTerm, article, url) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url)
   }
-  var title = article.title + TITLE_APPEND_SIG
+  var title = ''
+  if (article.title !== undefined &&
+      article.title != null &&
+      article.title != '') {
+    title = article.title + TITLE_APPEND_SIG
+  } else {
+    title = 'Search results for "' + searchTerm + '"' + TITLE_APPEND_SIG
+  }
   var updatedContentHtml = S(article.content)
       .replaceAll(
         'href="http',
