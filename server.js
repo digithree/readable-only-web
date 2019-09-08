@@ -45,6 +45,21 @@ const HTML_URL_BAR = `
     </form>
     `
 
+const PAGE_LINK_HEADER_ANY = [
+  '/main.css'
+]
+
+const PAGE_LINK_HEADER_MAIN = [
+  '/main.css',
+  {
+    'href': 'opensearch.xml',
+    props: [
+      'rel="search"',
+      'type="application/opensearchdescription+xml"',
+      'title="ROW Search"'
+    ]
+  }
+]
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -76,9 +91,7 @@ app.get('/', function (req, res) {
     var html = htmlBuilder({
       title: 'Readble Only Web',
       favicon: '/icon/favicon-16x16.png',
-      links: [
-        '/main.css'
-      ],
+      links: PAGE_LINK_HEADER_MAIN,
       content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + converter.makeHtml(data)
     })
     res.send(html);
@@ -204,9 +217,7 @@ function constructSearchPage(article, url) {
       ).toString()
   return htmlBuilder({
     title: title,
-    links: [
-      '/main.css'
-    ],
+    links: PAGE_LINK_HEADER_ANY,
     content: HTML_SEARCH_BAR + '<hr/><h1>' + title + '</h1>' + updatedContentHtml
   })
 }
@@ -223,9 +234,7 @@ function constructArticlePage(article, url) {
       ).toString()
   return htmlBuilder({
     title: title,
-    links: [
-      '/main.css'
-    ],
+    links: PAGE_LINK_HEADER_ANY,
     content: '<h1>' + title + '</h1>' + updatedContentHtml
   })
 }
@@ -234,9 +243,7 @@ function constructUrlErrorPage(url) {
   return htmlBuilder({
     title: 'Error accessing URL' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    links: [
-      '/main.css'
-    ],
+    links: PAGE_LINK_HEADER_ANY,
     content: '<h2>Error accessing URL</h2>' +
         '<p>Could not extract article format for URL: ' + url
   })
@@ -246,9 +253,7 @@ function constructSearchlErrorPage(searchTerm) {
   return htmlBuilder({
     title: 'Error performing search' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    links: [
-      '/main.css'
-    ],
+    links: PAGE_LINK_HEADER_ANY,
     content: '<h2>Error performing search</h2>' +
         '<p>Could not perform search for term: ' + searchTerm
   })

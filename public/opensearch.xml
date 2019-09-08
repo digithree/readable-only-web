@@ -1,0 +1,10 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>ROW< Search/ShortName>
+  <Description>Readable Only Web Search</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16" type="image/png">https://row.openode.io/icon/favicon-16x16.png</Image>
+  <Image width="32" height="32" type="image/png">https://row.openode.io/icon/favicon-32x32.png</Image>
+  <Image width="128" height="128" type="image/png">https://row.openode.io/icon/icon-128x128.png</Image>
+  <Url method="get" type="text/html" template="https://row.openode.io/search?q={searchTerms}" />
+</OpenSearchDescription>
