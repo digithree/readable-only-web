@@ -80,14 +80,10 @@ const HTML_URL_BAR = `
     `
 
 const PAGE_LINK_HEADER_ANY = [
-  //'/css/base-min.css',
-  //'/css/grids-responsive-min.css'
   '/css/main.css'
 ]
 
 const PAGE_LINK_HEADER_MAIN = [
-  //'/css/base-min.css',
-  //'/css/grids-responsive-min.css',
   '/css/main.css',
   {
     'href': 'opensearch.xml',
