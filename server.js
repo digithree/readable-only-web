@@ -17,6 +17,7 @@ const SEARCH_API_ADDR = 'https://duckduckgo.com/html/?kd=-1&k1=-1&ko=-2&kp=-2&kz
 const DDG_SEARCH_ADDR = 'https://duckduckgo.com/html/?q='
 const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 
+const MAX_TITLE_LENGTH = 100
 const TITLE_APPEND_SIG = ' [via ROW]'
 
 // should force lowercase to comparing
@@ -300,7 +301,31 @@ function constructArticlePage(article, url) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url)
   }
-  var title = article.title + TITLE_APPEND_SIG
+  var title = ''
+  if (article.title !== undefined &&
+      article.title != null &&
+      article.title != '') {
+    title = article.title
+  } else if (article.excerpt !== undefined &&
+      article.excerpt != null &&
+      article.excerpt != '') {
+    title = article.excerpt
+  } else {
+    const $ = cheerio.load(article.content)
+    if ($('h1').get().length > 0) {
+      title = $('h1').text()
+    } else if ($('p').get().length > 0) {
+      title = $('p').text()
+    } else {
+      // fall back in worst case to use URL
+      title = 'Page at ' + url
+    }
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    title = title.substring(0, MAX_TITLE_LENGTH) + '…'
+  }
+  title = title + TITLE_APPEND_SIG
+
   var htmlText = S(article.content)
       .replaceAll(
         'href="http',
