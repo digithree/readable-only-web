@@ -322,12 +322,21 @@ function constructArticlePage(article, url) {
   }
   title = title + TITLE_APPEND_SIG
 
+  var author = null
+  if (article.byline !== undefined &&
+      article.byline != null &&
+      article.byline != '') {
+    author = article.byline
+  }
+
   var htmlText = S(article.content)
       .replaceAll(
         'href="http',
         'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
       ).toString()
-  htmlText = '<h1>' + title + '</h1>' + htmlText
+  htmlText = '<h1>' + title + '</h1><p class="light"><i>' + decodeURIComponent(url) + '</i></p>' + 
+    (author != null ? ('<p class="light"><i> Attibution: ' + author + '</i></p>') : '') +
+    htmlText
   return htmlBuilder({
     title: title,
     links: PAGE_LINK_HEADER_ANY,
