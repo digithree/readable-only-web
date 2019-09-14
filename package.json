@@ -21,9 +21,9 @@
   },
   "homepage": "https://github.com/digithree/readable-only-web",
   "dependencies": {
-    "atob": "^2.0.3",
+    "atob": "2.1.2",
+    "btoa": "1.2.1",
     "body-parser": "^1.19.0",
-    "btoa": "^1.1.2",
     "dompurify": "1.0.11",
     "express": "^4.17.1",
     "jsdom": "15.1.1",

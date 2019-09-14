@@ -107,12 +107,16 @@ const S = require('string')
 const cheerio = require('cheerio')
 const showdown = require('showdown')
 const fs = require("fs")
+//const Base64 = require("./base64.js").Base64
+const UrlCompress = require("./url-compress.js").UrlCompress
 
 var app = express()
 app.set('port', process.env.PORT || 5000)
 app.use(express.static(__dirname + '/public'))
 app.use(bodyParser.json())
 
+
+// --- endpoints
 
 app.get('/', function (req, res) {
   updateServiceHostname(req)
@@ -148,6 +152,37 @@ app.get('/search', function (req, res) {
   var searchTerm = req.query.q
   doSearch(searchTerm, res, options)
 })
+
+app.get('/url', function (req, res) {
+  updateServiceHostname(req)
+  if (!req.query.q) {
+    htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
+    return
+  }
+  var options = getOptionsFromQueryObj(req.query)
+  var url = req.query.q
+  processUrl(url, res, options)
+})
+
+app.get('/c/:permlink', function (req, res) {
+  updateServiceHostname(req)
+  if (!req.params.permlink) {
+    htmlResult(constructUrlErrorPage("No compressed permlink given, invalid query"), res)
+    return
+  }
+  // TODO : should options also be compressed?
+  var options = getOptionsFromQueryObj(req.query)
+  try {
+    var url = decodeUrl(req.params.permlink)
+    processUrl(url, res, options)
+  } catch (e) {
+    console.error(e)
+    htmlResult(constructUrlErrorPage("Error processing permlink, invalid query"), res)
+  }
+})
+
+
+// --- main functions
 
 function doSearch(searchTerm, res, options) {
   if (searchTerm.startsWith('!')) {
@@ -196,20 +231,6 @@ function doSearch(searchTerm, res, options) {
     htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
   })
 }
-
-app.get('/url', function (req, res) {
-  updateServiceHostname(req)
-  if (!req.query.q) {
-    htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
-    return
-  }
-  var options = getOptionsFromQueryObj(req.query)
-  if (req.query.noclean) {
-    clean = false
-  }
-  var url = req.query.q
-  processUrl(url, res, options)
-})
 
 function processUrl(url, res, options) {
   var uri = nodeUrl.parse(url)
@@ -428,6 +449,7 @@ function createStandardFooter(url, options) {
   }
   footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: true, embeds: true, iframes: true, othertags: true}) +
       '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
+      ' | Switch to <a href="' + constructCompressedUrl(url, options) + '">compressed link</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
   return footerHtml
 }
@@ -452,6 +474,12 @@ function constructInternalUrl(endpoint, query, options, overrideOptions) {
     internalUrl += '&'
   }
   internalUrl += 'q=' + query
+  return internalUrl
+}
+
+function constructCompressedUrl(url, options) {
+  let internalUrl = REAL_SERVICE_HOST_ADDR + '/c/' + encodeUrl(url)
+  // TODO : add options
   return internalUrl
 }
 
@@ -480,6 +508,14 @@ function updateServiceHostname(req) {
 
 function wrapHtmlContentForStyling(htmlText) {
   return '<div class="row-content">' + htmlText + '</div>'
+}
+
+function decodeUrl(encodedUrl) {
+  return UrlCompress.decode(encodedUrl)
+}
+
+function encodeUrl(url) {
+  return UrlCompress.encode(decodeURIComponent(url))
 }
 
 // Start server
