@@ -142,6 +142,34 @@ app.get('/', function (req, res) {
   })
 })
 
+app.get('/md/*', function (req, res) {
+  updateServiceHostname(req)
+  try {
+    var parts = req.path.split('/')
+    if (parts !== undefined &&
+        parts != null &&
+        parts.length > 0) {
+      fs.readFile('./' + parts[parts.length - 1] + '.md', 'utf8', function (err, data) {
+        if (err) {
+          htmlResult(constructUrlErrorPage('No markdown resource available at ' + parts[parts.length - 1]), res)
+          return
+        }
+        var converter = new showdown.Converter();
+        converter.setOption('noHeaderId', 'true');
+        var html = htmlBuilder({
+          title: 'ROW: ' + parts[parts.length - 1],
+          favicon: '/icon/favicon-16x16.png',
+          links: PAGE_LINK_HEADER_ANY,
+          content: wrapHtmlContentForStyling(converter.makeHtml(data))
+        })
+        res.send(html);
+      })
+    }
+  } catch (err) {
+    htmlResult(constructUrlErrorPage('Error accessing resource'), res)
+  }
+})
+
 app.get('/search', function (req, res) {
   updateServiceHostname(req)
   if (!req.query.q) {
