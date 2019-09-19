@@ -20,6 +20,15 @@ const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 const MAX_TITLE_LENGTH = 100
 const TITLE_APPEND_SIG = ' [via ROW]'
 
+const IMG_MAX_NUM = 4
+// three  kinds of limits:
+// 1. min dims per image, in combined w*h
+// 2. max dims per image, in combined w*h
+// 3. max base64 string encoded size per image in String.length
+const IMG_INLINE_DIM_MIN = 200 * 200
+const IMG_INLINE_DIM_MAX = 800 * 800
+const IMG_INLINE_BASE64_STR_LEN_MAX = 50000
+
 // should force lowercase to comparing
 const QUERY_PARAM_BLACKLIST_EXACT = [
   // Facebook
@@ -111,6 +120,7 @@ const fs = require("fs")
 const UrlCompress = require("./url-compress.js").UrlCompress
 var base64Image = require('node-base64-image')
 const wait = require('wait.for')
+var probeImageSize = require('probe-image-size')
 
 var app = express()
 app.set('port', process.env.PORT || 5000)
@@ -455,8 +465,14 @@ function processCleanHtmlOptions(htmlText, url, options, callback) {
     // if images enabled and remote images disabled, base64 encode images if possible
     if (options.imgs == 1) {
       var imgTags = $('img').get()
+      var numImagesRendered = 0
+      var removeAllRemaining = false
       for (var idx in imgTags) {
         var elem = imgTags[idx]
+        if (removeAllRemaining) {
+          $(elem).remove()
+          continue
+        }
         var imgSrc = ''
         try {
           imgSrc = $(elem).attr('src')
@@ -465,29 +481,52 @@ function processCleanHtmlOptions(htmlText, url, options, callback) {
           $(elem).remove()
           continue
         }
-        var mimeType = ''
-        if (imgSrc.endsWith('jpg')) {
-          mimeType = 'image/jpg'
-        } else if (imgSrc.endsWith('png')) {
-          mimeType = 'image/png'
-        } else {
-          // not supported, only jpg or png, remove this img tag
+        // screen for query parameters, if exist then do not query, may be a tracking pixel
+        if (imgSrc.indexOf('?') >= 0) {
           $(elem).remove()
           continue
         }
-        // TODO : check image size before attempting, should impose some limit
-
-        // note, in a wait.for fiber err case is handled by throwing exception, must be caught
-        var imgBase64Str = ''
+        // check image file size before attempting (both too small and too large), should impose some limit
+        var imageDetails = {}
         try {
-          imgBase64Str = wait.for(base64Image.encode, imgSrc, {string: true})
+          imageDetails = wait.for(probeWrapper, imgSrc)
+          if (imageDetails === undefined || imageDetails == null) {
+            $(elem).remove()
+            continue  
+          }
         } catch (err2) {
           console.error(err2)
           $(elem).remove()
           continue
         }
+        // check image size is within reasonable bounds
+        if ((imageDetails.width * imageDetails.height) < IMG_INLINE_DIM_MIN ||
+            (imageDetails.width * imageDetails.height) > IMG_INLINE_DIM_MAX) {
+          $(elem).remove()
+          continue
+        }
+        // note, in a wait.for fiber err case is handled by throwing exception, must be caught
+        var imgBase64Str = ''
+        try {
+          imgBase64Str = wait.for(base64Image.encode, imgSrc, {string: true})
+        } catch (err3) {
+          console.error(err3)
+          $(elem).remove()
+          continue
+        }
+        // check if base64 string is too large
+        if (imgBase64Str.length > IMG_INLINE_BASE64_STR_LEN_MAX) {
+          $(elem).remove()
+          continue
+        }
         // finally, set image in base64 encoding
-        $(elem).attr('src', 'data:' + mimeType + ';base64,' + imgBase64Str)
+        $(elem).attr('src', 'data:' + imageDetails.mime + ';base64,' + imgBase64Str)
+        // check if reached num images limit
+        numImagesRendered += 1
+        if (numImagesRendered >= IMG_MAX_NUM) {
+          removeAllRemaining = true
+          continue
+        }
       }
     }
     // add footer
@@ -498,13 +537,23 @@ function processCleanHtmlOptions(htmlText, url, options, callback) {
   })
 }
 
+function probeWrapper(url, callback) {
+  probeImageSize(url, function (err, result) {
+    if (err) {
+      callback(err, null)
+    } else {
+      callback(null, result)
+    }
+  });
+}
+
 function createStandardFooter(url, options) {
   var encodedUrl = encodeURIComponent(url)
   let footerHtml = '<hr/><p>Viewing: '
   if (options.imgs == 1) {
-    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with in-line images'
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with single in-line image'
   } else {
-    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1}) + '">[_]</a> with in-line images'
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1}) + '">[_]</a> with single in-line image'
   }
   if (options.imgs == 2) {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with remote images'
@@ -538,13 +587,10 @@ function constructInternalUrl(endpoint, query, options, overrideOptions) {
   let addedAtLeastOne = false
   Object.keys(options).forEach(function(key, index) {
     let value = options[key]
-    console.log(key)
-    console.log(value)
     if (overrideOptions !== undefined &&
         overrideOptions != null &&
         Object.prototype.hasOwnProperty.call(overrideOptions, key)) {
       value = overrideOptions[key]
-      console.log(value)
     }
     if (addedAtLeastOne) {
       internalUrl += '&'

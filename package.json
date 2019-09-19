@@ -34,6 +34,7 @@
     "cheerio": "1.0.0-rc.3",
     "showdown": "1.9.0",
     "node-base64-image": "1.0.6",
-    "wait.for": "0.6.6"
+    "wait.for": "0.6.6",
+    "probe-image-size": "5.0.0"
   }
 }
