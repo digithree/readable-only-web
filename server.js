@@ -125,21 +125,16 @@ app.get('/', function (req, res) {
     doSearch(req.query.q, res, getOptionsFromQueryObj(req.query))
     return
   }
-  fs.readFile('./README.md', 'utf8', function (err, data) {
-    if (err) {
-      htmlResult(constructSearchlErrorPage('Couldnt read index file'), res)
-      return
-    }
-    var converter = new showdown.Converter();
-    converter.setOption('noHeaderId', 'true');
-    var html = htmlBuilder({
-      title: 'Readble Only Web',
-      favicon: '/icon/favicon-16x16.png',
-      links: PAGE_LINK_HEADER_MAIN,
-      content: HTML_SEARCH_BAR + HTML_URL_BAR + '<hr/>' + wrapHtmlContentForStyling(converter.makeHtml(data))
-    })
-    res.send(html);
+  // else show homepage
+  var html = htmlBuilder({
+    title: 'Readble Only Web',
+    favicon: '/icon/favicon-16x16.png',
+    links: PAGE_LINK_HEADER_MAIN,
+    content: wrapHtmlContentForStyling('<h1>ROW: Readble Only Web</h1><br/>' + HTML_SEARCH_BAR + HTML_URL_BAR +
+        '<br/><br/><hr/><p><a href="/md/README">About this service</a> | ' +
+        '<a href="https://github.com/digithree/readable-only-web">Project on GitHub</a></p>')
   })
+  res.send(html)
 })
 
 app.get('/md/*', function (req, res) {
@@ -149,15 +144,16 @@ app.get('/md/*', function (req, res) {
     if (parts !== undefined &&
         parts != null &&
         parts.length > 0) {
-      fs.readFile('./' + parts[parts.length - 1] + '.md', 'utf8', function (err, data) {
+      var mdFileName = parts[parts.length - 1]
+      fs.readFile('./' + mdFileName + '.md', 'utf8', function (err, data) {
         if (err) {
-          htmlResult(constructUrlErrorPage('No markdown resource available at ' + parts[parts.length - 1]), res)
+          htmlResult(constructUrlErrorPage('No markdown resource available at ' + mdFileName), res)
           return
         }
         var converter = new showdown.Converter();
         converter.setOption('noHeaderId', 'true');
         var html = htmlBuilder({
-          title: 'ROW: ' + parts[parts.length - 1],
+          title: 'ROW: ' + mdFileName,
           favicon: '/icon/favicon-16x16.png',
           links: PAGE_LINK_HEADER_ANY,
           content: wrapHtmlContentForStyling(converter.makeHtml(data))
