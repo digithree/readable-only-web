@@ -1,7 +1,7 @@
 'use strict';
 
 // endpoint parameter options:
-//    imgs= 1 for On, -1 for off
+//    imgs= 2 for remote images on, 1 for base64 in-line encoded images, -1 for off
 //    embeds= 1 for On, -1 for off
 //    iframes= 1 for On, -1 for off
 //    othertags= 1 for On, -1 for off
@@ -109,6 +109,8 @@ const showdown = require('showdown')
 const fs = require("fs")
 //const Base64 = require("./base64.js").Base64
 const UrlCompress = require("./url-compress.js").UrlCompress
+var base64Image = require('node-base64-image')
+const wait = require('wait.for')
 
 var app = express()
 app.set('port', process.env.PORT || 5000)
@@ -252,7 +254,9 @@ function doSearch(searchTerm, res, options) {
 
     // construct HTML to return to browser
     let htmlText = constructSearchPage(searchTerm, article, url)
-    htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
+    processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
+      htmlResult(htmlRes, res)
+    })
   })
 }
 
@@ -309,7 +313,9 @@ function processUrlDefault(url, res, options) {
     
     // construct HTML to return to browser
     let htmlText = constructArticlePage(article, url)
-    htmlResult(processCleanHtmlOptions(htmlText, url, options), res)
+    processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
+      htmlResult(htmlRes, res)
+    })
   })
 }
 
@@ -414,64 +420,113 @@ function htmlResult(htmlText, res) {
   res.send(htmlText)
 }
 
-function processCleanHtmlOptions(htmlText, url, options) {
-  const $ = cheerio.load(htmlText)
-  // remove non-whitelisted tags
-  var tagsToRemove = $('*')
-      .get()
-      .map(el => el.name)
-      .filter(el => !TAGS_WHITELIST.includes(el))
-      .filter(tag => {
-        if (!options.imgs && tag.localeCompare('img') === 0) {
-          return true
+function processCleanHtmlOptions(htmlText, url, options, callback) {
+  // start wait.for fiber, allows serial execution of callbacks
+  // this is used for base64 image encode
+  wait.launchFiber(function () {
+    const $ = cheerio.load(htmlText)
+    // remove non-whitelisted tags
+    var tagsToRemove = $('*')
+        .get()
+        .map(el => el.name)
+        .filter(el => !TAGS_WHITELIST.includes(el))
+        .filter(tag => {
+          if (options.imgs == -1 && tag.localeCompare('img') === 0) {
+            return true
+          }
+          if (options.embeds == -1 && tag.localeCompare('embed') === 0) {
+            return true
+          }
+          if (options.iframes == -1 && tag.localeCompare('iframe') === 0) {
+            return true
+          }
+          if (options.othertags == -1 &&
+              tag.localeCompare('img') !== 0 &&
+              tag.localeCompare('embed') !== 0 &&
+              tag.localeCompare('iframe') !== 0) {
+            return true
+          }
+          return false
+        })
+    for (let idx in tagsToRemove) {
+      $(tagsToRemove[idx])
+          .remove()
+    }
+    // if images enabled and remote images disabled, base64 encode images if possible
+    if (options.imgs == 1) {
+      var imgTags = $('img').get()
+      for (var idx in imgTags) {
+        var elem = imgTags[idx]
+        var imgSrc = ''
+        try {
+          imgSrc = $(elem).attr('src')
+        } catch (err1) {
+          console.error(err1)
+          $(elem).remove()
+          continue
         }
-        if (!options.embeds && tag.localeCompare('embed') === 0) {
-          return true
+        var mimeType = ''
+        if (imgSrc.endsWith('jpg')) {
+          mimeType = 'image/jpg'
+        } else if (imgSrc.endsWith('png')) {
+          mimeType = 'image/png'
+        } else {
+          // not supported, only jpg or png, remove this img tag
+          $(elem).remove()
+          continue
         }
-        if (!options.iframes && tag.localeCompare('iframe') === 0) {
-          return true
+        // TODO : check image size before attempting, should impose some limit
+
+        // note, in a wait.for fiber err case is handled by throwing exception, must be caught
+        var imgBase64Str = ''
+        try {
+          imgBase64Str = wait.for(base64Image.encode, imgSrc, {string: true})
+        } catch (err2) {
+          console.error(err2)
+          $(elem).remove()
+          continue
         }
-        if (!options.othertags &&
-            tag.localeCompare('img') !== 0 &&
-            tag.localeCompare('embed') !== 0 &&
-            tag.localeCompare('iframe') !== 0) {
-          return true
-        }
-        return false
-      })
-  for (let idx in tagsToRemove) {
-    $(tagsToRemove[idx])
-        .remove()
-  }
-  $('body')
-      .append(createStandardFooter(url, options))
-  return $.html()
+        // finally, set image in base64 encoding
+        $(elem).attr('src', 'data:' + mimeType + ';base64,' + imgBase64Str)
+      }
+    }
+    // add footer
+    $('body')
+        .append(createStandardFooter(url, options))
+    // render html and call callback
+    callback($.html())
+  })
 }
 
 function createStandardFooter(url, options) {
   var encodedUrl = encodeURIComponent(url)
   let footerHtml = '<hr/><p>Viewing: '
-  if (options.imgs) {
-    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: false}) + '">[x]</a> with images'
+  if (options.imgs == 1) {
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with in-line images'
   } else {
-    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: true}) + '">[ ]</a> with images'
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1}) + '">[_]</a> with in-line images'
   }
-  if (options.embeds) {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: false}) + '">[x]</a> with embeds'
+  if (options.imgs == 2) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with remote images'
   } else {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: true}) + '">[ ]</a> with embeds'
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 2}) + '">[_]</a> with remote images'
   }
-  if (options.iframes) {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: false}) + '">[x]</a> with iframes'
+  if (options.embeds == 1) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: -1}) + '">[x]</a> with embeds'
   } else {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: true}) + '">[ ]</a> with iframes'
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: 1}) + '">[_]</a> with embeds'
   }
-  if (options.othertags) {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: false}) + '">[x]</a> with other blacklisted tags'
+  if (options.iframes == 1) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: -1}) + '">[x]</a> with iframes'
   } else {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: true}) + '">[ ]</a> with other blacklisted tags'
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {iframes: 1}) + '">[_]</a> with iframes'
   }
-  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: true, embeds: true, iframes: true, othertags: true}) +
+  if (options.othertags == 1) {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: -1}) + '">[x]</a> with other blacklisted tags'
+  } else {
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: 1}) + '">[_]</a> with other blacklisted tags'
+  }
+  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: 2, embeds: 1, iframes: 1, othertags: 1}) +
       '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
       ' | Switch to <a href="' + constructCompressedUrl(url, options) + '">compressed link</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
@@ -482,16 +537,19 @@ function constructInternalUrl(endpoint, query, options, overrideOptions) {
   let internalUrl = REAL_SERVICE_HOST_ADDR + '/' + endpoint + '?'
   let addedAtLeastOne = false
   Object.keys(options).forEach(function(key, index) {
-    let value = options[key]    
+    let value = options[key]
+    console.log(key)
+    console.log(value)
     if (overrideOptions !== undefined &&
         overrideOptions != null &&
         Object.prototype.hasOwnProperty.call(overrideOptions, key)) {
       value = overrideOptions[key]
+      console.log(value)
     }
     if (addedAtLeastOne) {
       internalUrl += '&'
     }
-    internalUrl += key + '=' + (value ? '1' : '-1')
+    internalUrl += key + '=' + value
     addedAtLeastOne = true
   });
   if (addedAtLeastOne) {
@@ -509,17 +567,17 @@ function constructCompressedUrl(url, options) {
 
 function getOptionsFromQueryObj(queryParams) {
   let options = {
-    imgs: false,
-    embeds: false,
-    iframes: false,
-    othertags: false
+    imgs: 1,
+    embeds: -1,
+    iframes: -1,
+    othertags: -1
   }
   if (queryParams === undefined || queryParams == null) {
     return options
   }
   Object.keys(options).forEach(function(key, index) {
     if (Object.prototype.hasOwnProperty.call(queryParams, key)) {
-      options[key] = queryParams[key] == 1
+      options[key] = queryParams[key]
     }
   })
   return options
