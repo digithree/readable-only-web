@@ -6,12 +6,13 @@ var UrlCompress = {
     // only supported protocols
     'A': 'http://',
     'B': 'https://',
+    // top level domains
+    'C': 'www.',
     // domain extension
-    'C': '.com',
-    'D': '.org',
-    'E': '.net',
-    'F': '.co',
-    'G': '.io',
+    'D': '.com',
+    'E': '.org',
+    'F': '.net',
+    'G': '.co',
     // file extension
     'H': '.htm' //also html variant
   },
@@ -20,10 +21,10 @@ var UrlCompress = {
     '%a': '.edu',
     '%b': '.gov',
     '%c': '.info',
+    '%d': '.io',
     // file extension
-    '%d': '.php',
-    '%e': '.asp', //also aspx variant
-    '%f': '.jsp'
+    '%e': '.php',
+    '%f': '.asp' //also aspx variant
   },
   _lookup_table_common_special: {
     'I': '-',
