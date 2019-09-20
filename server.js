@@ -5,6 +5,7 @@
 //    embeds= 1 for On, -1 for off
 //    iframes= 1 for On, -1 for off
 //    othertags= 1 for On, -1 for off
+//    theme= 1 for light (default), 2 for dark, otherwise ignored and default used
 //    q= search term or URL
 var REAL_SERVICE_HOST_ADDR = 'localhost:5000' //default
 
@@ -75,6 +76,7 @@ const TAGS_WHITELIST = [
 const HTML_SEARCH_BAR = `
     <h4>Search</h4>
     <form method="get" action="/search">
+      %s
       <input type="text" name="q" size="40">
       <button type="submit">Search</button>
     </form>
@@ -83,19 +85,21 @@ const HTML_SEARCH_BAR = `
 const HTML_URL_BAR = `
     <h4>Go to URL</h4>
     <form method="get" action="/url">
+      %s
       <input type="text" name="q" size="40">
       <button type="submit">Go</button>
     </form>
     `
 
+const PAGE_LINK_CSS_FORMAT = '/css/%s.css'
+
 const PAGE_LINK_HEADER_ANY = [
-  '/css/main.css'
+  // nothing additional, css added in code
 ]
 
 const PAGE_LINK_HEADER_MAIN = [
-  '/css/main.css',
   {
-    'href': 'opensearch.xml',
+    'href': '/opensearch.xml',
     props: [
       'rel="search"',
       'type="application/opensearchdescription+xml"',
@@ -132,17 +136,18 @@ app.use(bodyParser.json())
 
 app.get('/', function (req, res) {
   updateServiceHostname(req)
+  var options = getOptionsFromQueryObj(req.query)
   if (req.query.q !== undefined && req.query.q != null) {
     // treat as search request if has query param, redirect
-    doSearch(req.query.q, res, getOptionsFromQueryObj(req.query))
+    doSearch(req.query.q, res, options)
     return
   }
   // else show homepage
   var html = htmlBuilder({
     title: 'Readble Only Web',
     favicon: '/icon/favicon-16x16.png',
-    links: PAGE_LINK_HEADER_MAIN,
-    content: wrapHtmlContentForStyling('<h1>ROW: Readble Only Web</h1><br/>' + HTML_SEARCH_BAR + HTML_URL_BAR +
+    links: createHeaderLink(options, PAGE_LINK_HEADER_MAIN),
+    content: wrapHtmlContentForStyling('<h1>ROW: Readble Only Web</h1><br/>' + createSearchBar(options) + createUrlBar(options) +
         '<br/><br/><hr/><p><a href="/md/README">About this service</a> | ' +
         '<a href="https://github.com/digithree/readable-only-web">Project on GitHub</a></p>')
   })
@@ -151,6 +156,7 @@ app.get('/', function (req, res) {
 
 app.get('/md/*', function (req, res) {
   updateServiceHostname(req)
+  var options = getOptionsFromQueryObj(req.query)
   try {
     var parts = req.path.split('/')
     if (parts !== undefined &&
@@ -159,7 +165,7 @@ app.get('/md/*', function (req, res) {
       var mdFileName = parts[parts.length - 1]
       fs.readFile('./' + mdFileName + '.md', 'utf8', function (err, data) {
         if (err) {
-          htmlResult(constructUrlErrorPage('No markdown resource available at ' + mdFileName), res)
+          htmlResult(constructUrlErrorPage('No markdown resource available at ' + mdFileName, options), res)
           return
         }
         var converter = new showdown.Converter();
@@ -167,53 +173,53 @@ app.get('/md/*', function (req, res) {
         var html = htmlBuilder({
           title: 'ROW: ' + mdFileName,
           favicon: '/icon/favicon-16x16.png',
-          links: PAGE_LINK_HEADER_ANY,
+          links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
           content: wrapHtmlContentForStyling(converter.makeHtml(data))
         })
         res.send(html);
       })
     }
   } catch (err) {
-    htmlResult(constructUrlErrorPage('Error accessing resource'), res)
+    htmlResult(constructUrlErrorPage('Error accessing resource', options), res)
   }
 })
 
 app.get('/search', function (req, res) {
   updateServiceHostname(req)
+  var options = getOptionsFromQueryObj(req.query)
   if (!req.query.q) {
-    htmlResult(constructSearchlErrorPage('NONE GIVEN, invalid search term'), res)
+    htmlResult(constructSearchErrorPage('NONE GIVEN, invalid search term', options), res)
     return
   }
-  var options = getOptionsFromQueryObj(req.query)
   var searchTerm = req.query.q
   doSearch(searchTerm, res, options)
 })
 
 app.get('/url', function (req, res) {
   updateServiceHostname(req)
+  var options = getOptionsFromQueryObj(req.query)
   if (!req.query.q) {
-    htmlResult(constructUrlErrorPage("NONE GIVEN, invalid query"), res)
+    htmlResult(constructUrlErrorPage('NONE GIVEN, invalid query', options), res)
     return
   }
-  var options = getOptionsFromQueryObj(req.query)
   var url = req.query.q
   processUrl(url, res, options)
 })
 
 app.get('/c/:permlink', function (req, res) {
   updateServiceHostname(req)
-  if (!req.params.permlink) {
-    htmlResult(constructUrlErrorPage("No compressed permlink given, invalid query"), res)
-    return
-  }
   // TODO : should options also be compressed?
   var options = getOptionsFromQueryObj(req.query)
+  if (!req.params.permlink) {
+    htmlResult(constructUrlErrorPage('No compressed permlink given, invalid query', options), res)
+    return
+  }
   try {
     var url = decodeUrl(req.params.permlink)
     processUrl(url, res, options)
   } catch (e) {
     console.error(e)
-    htmlResult(constructUrlErrorPage("Error processing permlink, invalid query"), res)
+    htmlResult(constructUrlErrorPage('Error processing permlink, invalid query', options), res)
   }
 })
 
@@ -242,7 +248,7 @@ function doSearch(searchTerm, res, options) {
     headers: {'User-Agent': 'request'}
   }, (err, res2, data) => {
     if (err) {
-      htmlResult(constructSearchlErrorPage(searchTerm), res)
+      htmlResult(constructSearchErrorPage(searchTerm, options), res)
       return
     }
     // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
@@ -263,7 +269,7 @@ function doSearch(searchTerm, res, options) {
     let article = reader.parse();
 
     // construct HTML to return to browser
-    let htmlText = constructSearchPage(searchTerm, article, url)
+    let htmlText = constructSearchPage(searchTerm, article, url, options)
     processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
       htmlResult(htmlRes, res)
     })
@@ -308,7 +314,7 @@ function processUrlDefault(url, res, options) {
     headers: {'User-Agent': 'request'}
   }, (err, res2, data) => {
     if (err) {
-      htmlResult(constructUrlErrorPage(url), res)
+      htmlResult(constructUrlErrorPage(url, options), res)
       return
     }
     // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
@@ -322,16 +328,16 @@ function processUrlDefault(url, res, options) {
     let article = reader.parse();
     
     // construct HTML to return to browser
-    let htmlText = constructArticlePage(article, url)
+    let htmlText = constructArticlePage(article, url, options)
     processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
       htmlResult(htmlRes, res)
     })
   })
 }
 
-function constructSearchPage(searchTerm, article, url) {
+function constructSearchPage(searchTerm, article, url, options) {
   if (article === undefined || article == null) {
-    return constructUrlErrorPage(url)
+    return constructUrlErrorPage(url, options)
   }
   var title = ''
   if (article.title !== undefined &&
@@ -341,22 +347,29 @@ function constructSearchPage(searchTerm, article, url) {
   } else {
     title = 'Search results for "' + searchTerm + '"' + TITLE_APPEND_SIG
   }
+  var replaceLinkPart = 'href="' + REAL_SERVICE_HOST_ADDR + '/url?'
+  var replaceLinkParams = constructQueryParamsForOptions(options)
+  if (replaceLinkParams.length > 0) {
+    replaceLinkPart += replaceLinkParams + '&q=http'
+  } else {
+    replaceLinkPart += 'q=http'
+  }
   var htmlText = S(article.content)
       .replaceAll(
         'href="http',
-        'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
+        replaceLinkPart
       ).toString()
-  htmlText = HTML_SEARCH_BAR + '<hr/>' + wrapHtmlContentForStyling('<h1>' + title + '</h1>' + htmlText)
+  htmlText = createSearchBar(options) + '<hr/>' + wrapHtmlContentForStyling('<h1>' + title + '</h1>' + htmlText)
   return htmlBuilder({
     title: title,
-    links: PAGE_LINK_HEADER_ANY,
+    links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
     content: htmlText
   })
 }
 
-function constructArticlePage(article, url) {
+function constructArticlePage(article, url, options) {
   if (article === undefined || article == null) {
-    return constructUrlErrorPage(url)
+    return constructUrlErrorPage(url, options)
   }
   var title = ''
   if (article.title !== undefined &&
@@ -400,26 +413,26 @@ function constructArticlePage(article, url) {
     htmlText
   return htmlBuilder({
     title: title,
-    links: PAGE_LINK_HEADER_ANY,
+    links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
     content: wrapHtmlContentForStyling(htmlText)
   })
 }
 
-function constructUrlErrorPage(url) {
+function constructUrlErrorPage(url, options) {
   return htmlBuilder({
     title: 'Error accessing URL' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    links: PAGE_LINK_HEADER_ANY,
+    links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
     content: '<h2>Error accessing URL</h2>' +
         '<p>Could not extract article format for URL: ' + url
   })
 }
 
-function constructSearchlErrorPage(searchTerm) {
+function constructSearchErrorPage(searchTerm, options) {
   return htmlBuilder({
     title: 'Error performing search' + TITLE_APPEND_SIG,
     favicon: '/icon/favicon-16x16.png',
-    links: PAGE_LINK_HEADER_ANY,
+    links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
     content: '<h2>Error performing search</h2>' +
         '<p>Could not perform search for term: ' + searchTerm
   })
@@ -581,10 +594,12 @@ function createStandardFooter(url, options) {
       options.othertags != -1
   footerHtml += '</p><p>Actions: <a href="/">Home</a>' +
       (disallowAllActive ?
-        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1, embeds: -1, iframes: -1, othertags: -1}) +
-          '">Disallow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>') :
-        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1, embeds: 1, iframes: 1, othertags: 1}) +
-          '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>')) +
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1, embeds: -1, iframes: -1, othertags: -1}) + '">Disallow all</a>') :
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1, embeds: 1, iframes: 1, othertags: 1}) + '">Allow all</a>')) +
+      (options.theme == 1 ?
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {theme: 2}) + '">Dark</a> theme') :
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {theme: 1}) + '">Light</a> theme')) +
+      ' | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
       ' | Switch to <a href="' + constructCompressedUrl(url, options) + '">compressed link</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
   return footerHtml
@@ -592,7 +607,23 @@ function createStandardFooter(url, options) {
 
 function constructInternalUrl(endpoint, query, options, overrideOptions) {
   let internalUrl = REAL_SERVICE_HOST_ADDR + '/' + endpoint + '?'
-  let addedAtLeastOne = false
+  var params = constructQueryParamsForOptions(options, overrideOptions)
+  if (query !== undefined && query != null) {
+    if (params.length > 0) {
+      params += '&'
+    }
+    params += 'q=' + query
+  }
+  internalUrl += params
+  return internalUrl
+}
+
+function constructQueryParamsForOptions(options, overrideOptions) {
+  if (options === undefined || options == null) {
+    return ''
+  }
+  var params = ''
+  var addedAtLeastOne = false
   Object.keys(options).forEach(function(key, index) {
     let value = options[key]
     if (overrideOptions !== undefined &&
@@ -601,16 +632,12 @@ function constructInternalUrl(endpoint, query, options, overrideOptions) {
       value = overrideOptions[key]
     }
     if (addedAtLeastOne) {
-      internalUrl += '&'
+      params += '&'
     }
-    internalUrl += key + '=' + value
+    params += key + '=' + value
     addedAtLeastOne = true
-  });
-  if (addedAtLeastOne) {
-    internalUrl += '&'
-  }
-  internalUrl += 'q=' + query
-  return internalUrl
+  })
+  return params
 }
 
 function constructCompressedUrl(url, options) {
@@ -624,14 +651,15 @@ function getOptionsFromQueryObj(queryParams) {
     imgs: -1,
     embeds: -1,
     iframes: -1,
-    othertags: -1
+    othertags: -1,
+    theme: 1
   }
   if (queryParams === undefined || queryParams == null) {
     return options
   }
   Object.keys(options).forEach(function(key, index) {
     if (Object.prototype.hasOwnProperty.call(queryParams, key)) {
-      options[key] = queryParams[key]
+      options[key] = Number(queryParams[key])
     }
   })
   return options
@@ -652,6 +680,66 @@ function decodeUrl(encodedUrl) {
 
 function encodeUrl(url) {
   return UrlCompress.encode(decodeURIComponent(url))
+}
+
+function createHeaderLink(options, additionalLinksArray) {
+  var links = []
+  // first add theme
+  var theme = 1
+  if (options !== undefined &&
+      options != null &&
+      options.theme !== undefined) {
+    theme = options.theme
+  }
+  var cssLinkS = S(PAGE_LINK_CSS_FORMAT)
+  switch (theme) {
+    case 1:
+      cssLinkS = cssLinkS.replaceAll('%s', 'light')
+      break
+    case 2:
+      cssLinkS = cssLinkS.replaceAll('%s', 'dark')
+      break
+    default:
+      cssLinkS = cssLinkS.replaceAll('%s', 'light')
+  }
+  links.push(cssLinkS.toString())
+  // add any additional items
+  if (additionalLinksArray !== undefined &&
+      additionalLinksArray != null &&
+      additionalLinksArray.length > 0) {
+    links.push(...additionalLinksArray)
+  }
+  return links
+}
+
+function createSearchBar(options) {
+  var htmlHiddenItems = ''
+  if (options !== undefined && options != null) {
+    for (var key in options) {
+      htmlHiddenItems += S('<input type="hidden" name="%s$1" value="%s$2" />')
+        .replaceAll('%s$1', key)
+        .replaceAll('%s$2', options[key])
+        .toString()
+    }
+  }
+  return S(HTML_SEARCH_BAR)
+      .replaceAll('%s', htmlHiddenItems)
+      .toString()
+}
+
+function createUrlBar(options) {
+  var htmlHiddenItems = ''
+  if (options !== undefined && options != null) {
+    for (var key in options) {
+      htmlHiddenItems += S('<input type="hidden" name="%s$1" value="%s$2" />')
+        .replaceAll('%s$1', key)
+        .replaceAll('%s$2', options[key])
+        .toString()
+    }
+  }
+  return S(HTML_URL_BAR)
+      .replaceAll('%s', htmlHiddenItems)
+      .toString()
 }
 
 // Start server

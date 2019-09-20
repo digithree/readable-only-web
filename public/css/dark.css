@@ -1,0 +1,75 @@
+.row-content {
+  max-width: 52rem;
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+body {
+  background-color: #0F0F0F;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #f8f8f8;
+  font-family: Verdana, sans-serif;
+  line-height: 1.5;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 140%;
+}
+
+h2 {
+  font-size: 125%;
+}
+
+h3 {
+  font-size: 115%;
+}
+
+h4 {
+  font-size: 110%;
+}
+
+h5 {
+  font-size: 105%;
+}
+
+h6 {
+  font-size: 100%;
+}
+
+p, li {
+  color: #cecece;
+  font-family: Bitter ht, Baskerville, Garamond, serif;
+  line-height: 1.5;
+}
+
+p {
+  margin-top: 1.5rem;
+}
+
+p.light {
+  color: #5c5c5c;
+}
+
+li {
+  margin-top: 0.5rem;
+}
+
+a:link {
+  color: rgb(83, 211, 211); text-decoration: underline;
+}
+
+a:active {
+  color: rgb(142, 206, 228); text-decoration: underline;
+}
+
+a:visited {
+  color: lightgreen; text-decoration: underline;
+}
+
+a:hover {
+  color: lightsalmon; text-decoration: none;
+}
