@@ -575,8 +575,16 @@ function createStandardFooter(url, options) {
   } else {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: 1}) + '">[_]</a> with other blacklisted tags'
   }
-  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: 1, embeds: 1, iframes: 1, othertags: 1}) +
-      '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
+  var disallowAllActive = options.imgs != -1 &&
+      options.embeds != -1 &&
+      options.iframes != -1 &&
+      options.othertags != -1
+  footerHtml += '</p><p>Actions: <a href="/">Home</a>' +
+      (disallowAllActive ?
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1, embeds: -1, iframes: -1, othertags: -1}) +
+          '">Disallow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>') :
+        ('| <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1, embeds: 1, iframes: 1, othertags: 1}) +
+          '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>')) +
       ' | Switch to <a href="' + constructCompressedUrl(url, options) + '">compressed link</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
   return footerHtml
