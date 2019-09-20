@@ -20,7 +20,7 @@ const GOOGLE_SEARCH_ADDR = 'https://google.com/search?q='
 const MAX_TITLE_LENGTH = 100
 const TITLE_APPEND_SIG = ' [via ROW]'
 
-const IMG_MAX_NUM = 4
+const IMG_MAX_NUM = 1
 // three  kinds of limits:
 // 1. min dims per image, in combined w*h
 // 2. max dims per image, in combined w*h
