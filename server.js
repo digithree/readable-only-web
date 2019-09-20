@@ -1,7 +1,7 @@
 'use strict';
 
 // endpoint parameter options:
-//    imgs= 2 for remote images on, 1 for base64 in-line encoded images, -1 for off
+//    imgs= 1 for remote images on, 2 for base64 in-line encoded images, -1 for off
 //    embeds= 1 for On, -1 for off
 //    iframes= 1 for On, -1 for off
 //    othertags= 1 for On, -1 for off
@@ -463,7 +463,7 @@ function processCleanHtmlOptions(htmlText, url, options, callback) {
           .remove()
     }
     // if images enabled and remote images disabled, base64 encode images if possible
-    if (options.imgs == 1) {
+    if (options.imgs == 2) {
       var imgTags = $('img').get()
       var numImagesRendered = 0
       var removeAllRemaining = false
@@ -550,15 +550,15 @@ function probeWrapper(url, callback) {
 function createStandardFooter(url, options) {
   var encodedUrl = encodeURIComponent(url)
   let footerHtml = '<hr/><p>Viewing: '
-  if (options.imgs == 1) {
+  if (options.imgs == 2) {
     footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with single in-line image'
   } else {
-    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1}) + '">[_]</a> with single in-line image'
+    footerHtml += '<a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 2}) + '">[_]</a> with single in-line image'
   }
-  if (options.imgs == 2) {
+  if (options.imgs == 1) {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: -1}) + '">[x]</a> with remote images'
   } else {
-    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 2}) + '">[_]</a> with remote images'
+    footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {imgs: 1}) + '">[_]</a> with remote images'
   }
   if (options.embeds == 1) {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {embeds: -1}) + '">[x]</a> with embeds'
@@ -575,7 +575,7 @@ function createStandardFooter(url, options) {
   } else {
     footerHtml += ' | <a href="' + constructInternalUrl('url', encodedUrl, options, {othertags: 1}) + '">[_]</a> with other blacklisted tags'
   }
-  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: 2, embeds: 1, iframes: 1, othertags: 1}) +
+  footerHtml += '</p><p>Actions: <a href="/">Home</a> | <a href="' + constructInternalUrl('url', encodedUrl, {imgs: 1, embeds: 1, iframes: 1, othertags: 1}) +
       '">Allow all</a> | <a href="https://github.com/digithree/readable-only-web/issues/new">Report issue</a>' +
       ' | Switch to <a href="' + constructCompressedUrl(url, options) + '">compressed link</a>' +
       ' | <a href="' + url + '">Exit ROW</a> (redirect to original content)'
@@ -613,7 +613,7 @@ function constructCompressedUrl(url, options) {
 
 function getOptionsFromQueryObj(queryParams) {
   let options = {
-    imgs: 1,
+    imgs: -1,
     embeds: -1,
     iframes: -1,
     othertags: -1
