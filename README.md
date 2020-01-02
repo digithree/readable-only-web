@@ -188,6 +188,7 @@ There are four options, which can be included as query parameters, or toggled by
 2. `embeds`: show embedded content (`=1`) or not (`=-1`)
 3. `iframes`: show iframes (`=1`) or not (`=-1`)
 4. `othertags`: show other non-whitelisted HTML tags (`=1`) or not (`=-1`)
+5. `theme`: display using light theme (`=1`) or dark (`=2`)
 
 ### Setting up search in your browser bar
 
@@ -228,7 +229,6 @@ Firefox on mobile supports setting a custom search engine in `Settings > Search 
 ### Other usage notes
 
 1. All links on ROW formatted pages will also route back through ROW, giving you seemless usage.
-2. I considered adding a dark mode theme in CSS, but really if you want this just fork it and change it. I want it to be stateless and persistent settings like theme go against that. If the current theme really annoys you, [open a ticket](https://github.com/digithree/readable-only-web/issues/new).
 
 ## Installation and deployment
 
