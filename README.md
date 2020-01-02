@@ -57,6 +57,8 @@ You'll see a footer with these options appended to the page rendering where avai
 
 The only form elements allowed are the search and go to URL bars that appear on this page and are added to the search page results at the top.
 
+*NEW:* Media Bias/Fact Check article publisher search integration into article metadata header section if publisher can be detected. Continues to route through ROW and is a separate link, MB/FC is not queries automatically.
+
 #### Adapters
 
 Some webpages will need an additional click through or some custom webpage cleaning to make it work with the Readability transformer. The following is a list of supported adapters:

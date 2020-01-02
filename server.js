@@ -126,6 +126,18 @@ var base64Image = require('node-base64-image')
 const wait = require('wait.for')
 var probeImageSize = require('probe-image-size')
 
+const metascraper = require('metascraper')([
+  require('metascraper-author')(),
+  //require('metascraper-date')(),
+  //require('metascraper-description')(),
+  //require('metascraper-image')(),
+  //require('metascraper-logo')(),
+  //require('metascraper-clearbit')(),
+  require('metascraper-publisher')(),
+  require('metascraper-title')()
+  //require('metascraper-url')()
+])
+
 var app = express()
 app.set('port', process.env.PORT || 5000)
 app.use(express.static(__dirname + '/public'))
@@ -326,12 +338,21 @@ function processUrlDefault(url, res, options) {
     var dom = new JSDOM(cleanHtmlText, {url: url});
     let reader = new Readability(dom.window.document);
     let article = reader.parse();
-    
-    // construct HTML to return to browser
-    let htmlText = constructArticlePage(article, url, options)
-    processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
-      htmlResult(htmlRes, res)
-    })
+
+    // get better metadata from Metascraper than we can get from Readability
+    metascraper({ url: url, html: data })
+      .then(metadata => {
+        console.log(metadata)
+        // construct HTML to return to browser
+        let htmlText = constructArticlePage(article, metadata, url, options)
+        processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
+          htmlResult(htmlRes, res)
+        })
+      })
+      .catch(err => {
+        console.error(err)
+        htmlResult(constructUrlErrorPage(url, options), res)
+      })
   })
 }
 
@@ -367,12 +388,18 @@ function constructSearchPage(searchTerm, article, url, options) {
   })
 }
 
-function constructArticlePage(article, url, options) {
+function constructArticlePage(article, metadata, url, options) {
   if (article === undefined || article == null) {
     return constructUrlErrorPage(url, options)
   }
   var title = ''
-  if (article.title !== undefined &&
+  if (metadata !== undefined &&
+      metadata != null &&
+      metadata.title !== undefined &&
+      metadata.title != null &&
+      metadata.title != '') {
+    title = metadata.title
+  } else if (article.title !== undefined &&
       article.title != null &&
       article.title != '') {
     title = article.title
@@ -397,7 +424,26 @@ function constructArticlePage(article, url, options) {
   title = title + TITLE_APPEND_SIG
 
   var author = null
-  if (article.byline !== undefined &&
+  var publisher = null
+  if (metadata !== undefined &&
+      metadata != null) {
+    if (metadata.author !== undefined &&
+        metadata.author != null &&
+        metadata.author != '') {
+      author = metadata.author
+    }
+    if (metadata.publisher !== undefined &&
+        metadata.publisher != null &&
+        metadata.publisher != '' &&
+        metadata.publisher.localeCompare('Media Bias/Fact Check') != 0) {
+      publisher = metadata.publisher
+      if (author == null) {
+        author = metadata.publisher
+      }
+    }
+  }
+  if (author == null &&
+      article.byline !== undefined &&
       article.byline != null &&
       article.byline != '') {
     author = article.byline
@@ -409,7 +455,11 @@ function constructArticlePage(article, url, options) {
         'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
       ).toString()
   htmlText = '<h1>' + title + '</h1><p class="light"><i>' + decodeURIComponent(url) + '</i></p>' + 
-    (author != null ? ('<p class="light"><i> Attibution: ' + author + '</i></p>') : '') +
+    (author != null ? ('<p class="light"><i> Attibution:</i> <strong>' + author + '</strong></p>') : '') +
+    (publisher != null ? ('<p class="light"><i>Search the Media Bias/Fact Check for <a href="' +
+        constructInternalUrl('url', encodeURIComponent('https://mediabiasfactcheck.com/?s=' + encodeURIComponent(publisher)), options)
+        + '">' + publisher + '</a></i></p>')
+      : '') +
     htmlText
   return htmlBuilder({
     title: title,
