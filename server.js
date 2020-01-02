@@ -125,10 +125,11 @@ const UrlCompress = require("./url-compress.js").UrlCompress
 var base64Image = require('node-base64-image')
 const wait = require('wait.for')
 var probeImageSize = require('probe-image-size')
+const moment = require('moment')
 
 const metascraper = require('metascraper')([
   require('metascraper-author')(),
-  //require('metascraper-date')(),
+  require('metascraper-date')(),
   //require('metascraper-description')(),
   //require('metascraper-image')(),
   //require('metascraper-logo')(),
@@ -430,7 +431,12 @@ function constructArticlePage(article, metadata, url, options) {
     if (metadata.author !== undefined &&
         metadata.author != null &&
         metadata.author != '') {
-      author = metadata.author
+      author = '<strong>' + metadata.author + '</strong>'
+      if (metadata.date !== undefined &&
+          metadata.date != null &&
+          metadata.date != '') {
+        author += ' on ' + moment(metadata.date).format('MMMM Do YYYY')
+      }
     }
     if (metadata.publisher !== undefined &&
         metadata.publisher != null &&
@@ -442,6 +448,7 @@ function constructArticlePage(article, metadata, url, options) {
       }
     }
   }
+  // fall back to Readability byline for attribution
   if (author == null &&
       article.byline !== undefined &&
       article.byline != null &&
@@ -455,7 +462,7 @@ function constructArticlePage(article, metadata, url, options) {
         'href="' + REAL_SERVICE_HOST_ADDR + '/url?q=http'
       ).toString()
   htmlText = '<h1>' + title + '</h1><p class="light"><i>' + decodeURIComponent(url) + '</i></p>' + 
-    (author != null ? ('<p class="light"><i> Attibution:</i> <strong>' + author + '</strong></p>') : '') +
+    (author != null ? ('<p class="light"><i> Attibution:</i> ' + author + '</p>') : '') +
     (publisher != null ? ('<p class="light"><i>Search the Media Bias/Fact Check for <a href="' +
         constructInternalUrl('url', encodeURIComponent('https://mediabiasfactcheck.com/?s=' + encodeURIComponent(publisher)), options)
         + '">' + publisher + '</a></i></p>')
