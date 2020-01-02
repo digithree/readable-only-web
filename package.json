@@ -22,19 +22,19 @@
   "homepage": "https://github.com/digithree/readable-only-web",
   "dependencies": {
     "atob": "2.1.2",
-    "btoa": "1.2.1",
     "body-parser": "^1.19.0",
-    "dompurify": "1.0.11",
+    "btoa": "1.2.1",
+    "cheerio": "1.0.0-rc.3",
+    "dompurify": "^2.0.7",
     "express": "^4.17.1",
     "jsdom": "15.1.1",
     "moz-readability-node": "0.2.4",
-    "node-html-builder": "1.0.2",
-    "request": "2.88.0",
-    "string": "3.3.3",
-    "cheerio": "1.0.0-rc.3",
-    "showdown": "1.9.0",
     "node-base64-image": "1.0.6",
-    "wait.for": "0.6.6",
-    "probe-image-size": "5.0.0"
+    "node-html-builder": "1.0.2",
+    "probe-image-size": "5.0.0",
+    "request": "2.88.0",
+    "showdown": "^1.9.1",
+    "string": "3.3.3",
+    "wait.for": "0.6.6"
   }
 }
