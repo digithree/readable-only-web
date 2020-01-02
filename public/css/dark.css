@@ -5,11 +5,11 @@
 }
 
 body {
-  background-color: #0F0F0F;
+  background-color: #202124;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #f8f8f8;
+  color: #B3B3B4;
   font-family: Verdana, sans-serif;
   line-height: 1.5;
   margin-top: 2rem;
@@ -41,7 +41,7 @@ h6 {
 }
 
 p, li {
-  color: #cecece;
+  color: #C7C8C9;
   font-family: Bitter ht, Baskerville, Garamond, serif;
   line-height: 1.5;
 }
@@ -51,7 +51,7 @@ p {
 }
 
 p.light {
-  color: #5c5c5c;
+  color: #666666;
 }
 
 li {
