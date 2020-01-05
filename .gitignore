@@ -12,6 +12,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# SSL certs and validation
+/public/.well-known
+/certs
+
 # art assets
 #/src/statics/art/
 
