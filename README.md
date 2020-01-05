@@ -118,7 +118,7 @@ I cannot formally guarantee that ROW will protect you from tracking, but it is a
 
 #### Regarding the OpeNode server
 
-There is a test deployment currently sitting at [https://row.openode.io](https://row.openode.io) which is open for anyone to use. I use it myself. Of course if you use it I (or employees of OpeNode) could see your IP address and what you're using it for. I don't want to know what you look at and don't intend to check, but you'd be foolish to rule it out, you don't know me.
+There is a permanent development deployment currently sitting at [https://row.onl](https://row.onl) and hosted by OpeNode which is open for anyone to use. I use it myself. Of course if you use it I (or employees of OpeNode) could see your IP address and what you're using it for. I don't want to know what you look at and don't intend to check, but you'd be foolish to rule it out, you don't know me.
 
 So, you are encouraged to set up your own little server, it's pretty straight forward to do and there's some info on how to do it further below. The more people using a single server the better, but up to a point as no server should have too much data logged by the service. I'm not sure what the ideal balance point is but you should assume your usage is being monitored by the service, although that should not translate into advertising tracking.
 
@@ -177,7 +177,7 @@ There's nothing fancy about the URL proxy, just pass the URL as a query paramete
 Exmaple:
 
 ```
-https://row.openode.io/url?q=https://spaceplace.nasa.gov/blue-sky/en/
+https://row.onl/url?q=https://spaceplace.nasa.gov/blue-sky/en/
 ```
 
 ### Options
@@ -197,7 +197,7 @@ Modern browsers provide search in the browser bar, where users used to only be a
 You will usually have to input the search engine URL, so type in the following URL if prompted:
 
 ```
-https://row.openode.io/search?q=%s
+https://row.onl/search?q=%s
 ```
 
 Make sure to replace your search engine hostname if you're using your own deployment.
@@ -218,7 +218,7 @@ Note also that Firefox on desktop supports a kind of search engine change "bang"
 
 Chrome on mobile does not let you input a custom search engine, but they do have a curious feature which makes it posisble to add ROW.
 
-If you visited the ROW homepage (`https://row.openode.io/` in my deployment for example) recently it will appear in the set search engine settings, which can see set at the `Settings > Search engine` screen, under the `Recently Visited` heading.
+If you visited the ROW homepage (`https://row.onl/` in my deployment for example) recently it will appear in the set search engine settings, which can see set at the `Settings > Search engine` screen, under the `Recently Visited` heading.
 
 This works because of the OpenSearch description resource which is make available to browsers who visit the main page and lets them know that ROW supports the OpenSearch standard.
 
