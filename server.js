@@ -126,6 +126,7 @@ var base64Image = require('node-base64-image')
 const wait = require('wait.for')
 var probeImageSize = require('probe-image-size')
 const moment = require('moment')
+const searchEngine = require('search-engine-nodejs').default
 
 const metascraper = require('metascraper')([
   require('metascraper-author')(),
@@ -255,6 +256,11 @@ function doSearch(searchTerm, res, options) {
       }
     }
   }
+  //searchDuckDuckGoDirectly(searchTerm, res, options)
+  searchVariousDirectly(searchTerm, res, options)
+}
+
+function searchDuckDuckGoDirectly(searchTerm, res, options) {
   var url = SEARCH_API_ADDR + encodeURI(searchTerm)
   request.get({
     url: url,
@@ -286,6 +292,56 @@ function doSearch(searchTerm, res, options) {
     processCleanHtmlOptions(htmlText, url, options, function(htmlRes) {
       htmlResult(htmlRes, res)
     })
+  })
+}
+
+function searchVariousDirectly(searchTerm, res, options) {
+  const searchOptions = {
+    qs: {
+        q: searchTerm
+    }
+  }
+  searchEngine.Google(searchOptions)
+    .then(results => {
+      let htmlText = buildSearchResultsPage(searchTerm, results, options)
+      processCleanHtmlOptions(htmlText, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
+        htmlResult(htmlRes, res)
+      })
+    })
+    .catch(err => {
+      console.error(err)
+      var html = constructUrlErrorPage(' Search for "' + searchTerm + '" could not be performed', options)
+      processCleanHtmlOptions(html, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
+        htmlResult(htmlRes, res)
+      })
+    })
+}
+
+function buildSearchResultsPage(searchTerm, results, options) {
+  if (results === undefined || results == null || results.length == 0) {
+    return constructUrlErrorPage(url + ' (article is undefined for search)', options)
+  }
+  var html = '<html>\n\t<body>'
+  for (var key in results) {
+    var replaceLinkPart = REAL_SERVICE_HOST_ADDR + '/url?'
+    var replaceLinkParams = constructQueryParamsForOptions(options)
+    if (replaceLinkParams.length > 0) {
+      replaceLinkPart += replaceLinkParams + '&q='
+    } else {
+      replaceLinkPart += 'q='
+    }
+    html += '\t<div>'
+    html += '\t\t<h3><a href="' + replaceLinkPart + results[key].url + '">' + results[key].title + '</a></h3>'
+    html += '\t\t<p><a href="' + results[key].url + '">' + results[key].url + '</a></p>'
+    html += '\t\t<p>' + results[key].description + '</p>'
+    html += '\t</div>'
+  }
+  html += '\t</body>\n</html>'
+  html = createSearchBar(options) + '<hr/>' + wrapHtmlContentForStyling('<h1>Search results for "' + searchTerm + '"' + '</h1>' + html)
+  return htmlBuilder({
+    title: 'Search "' + searchTerm + '"',
+    links: createHeaderLink(options, PAGE_LINK_HEADER_ANY),
+    content: html
   })
 }
 
@@ -327,7 +383,7 @@ function processUrlDefault(url, res, options) {
     headers: {'User-Agent': 'request'}
   }, (err, res2, data) => {
     if (err) {
-      htmlResult(constructUrlErrorPage(url, options), res)
+      htmlResult(constructUrlErrorPage(url + ' (GET error, ' + res2.err + ')', options), res)
       return
     }
     // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
@@ -352,14 +408,14 @@ function processUrlDefault(url, res, options) {
       })
       .catch(err => {
         console.error(err)
-        htmlResult(constructUrlErrorPage(url, options), res)
+        htmlResult(constructUrlErrorPage(url + ' (metascraper error, ' + err + ')', options), res)
       })
   })
 }
 
 function constructSearchPage(searchTerm, article, url, options) {
   if (article === undefined || article == null) {
-    return constructUrlErrorPage(url, options)
+    return constructUrlErrorPage(url + ' (article is undefined for search)', options)
   }
   var title = ''
   if (article.title !== undefined &&
@@ -391,7 +447,7 @@ function constructSearchPage(searchTerm, article, url, options) {
 
 function constructArticlePage(article, metadata, url, options) {
   if (article === undefined || article == null) {
-    return constructUrlErrorPage(url, options)
+    return constructUrlErrorPage(url + ' (article is undefined for readable view)', options)
   }
   var title = ''
   if (metadata !== undefined &&
