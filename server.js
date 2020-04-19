@@ -301,7 +301,7 @@ function searchVariousDirectly(searchTerm, res, options) {
         q: searchTerm
     }
   }
-  searchEngine.Google(searchOptions)
+  searchEngine.Yahoo(searchOptions)
     .then(results => {
       let htmlText = buildSearchResultsPage(searchTerm, results, options)
       processCleanHtmlOptions(htmlText, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
