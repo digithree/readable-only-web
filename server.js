@@ -209,6 +209,17 @@ app.get('/search', function (req, res) {
   doSearch(searchTerm, res, options)
 })
 
+app.get('/search-json', function (req, res) {
+  updateServiceHostname(req)
+  var options = getOptionsFromQueryObj(req.query)
+  if (!req.query.q) {
+    htmlResult(constructSearchErrorPage('NONE GIVEN, invalid search term', options), res)
+    return
+  }
+  var searchTerm = req.query.q
+  doSearchJson(searchTerm, res, options)
+})
+
 app.get('/url', function (req, res) {
   updateServiceHostname(req)
   var options = getOptionsFromQueryObj(req.query)
@@ -854,6 +865,58 @@ function createUrlBar(options) {
       .replaceAll('%s', htmlHiddenItems)
       .toString()
 }
+
+
+// JSON interface
+
+function doSearchJson(searchTerm, res, options) {
+  if (searchTerm.startsWith('!')) {
+    let parts = searchTerm.split(' ')
+    if (parts.length > 1) {
+      if (parts[0].localeCompare('!ddg') === 0 || parts[0].localeCompare('!google') === 0) {
+        // just remove bang
+        searchTerm = encodeURI(searchTerm.substring(parts[0].length + 1))
+        return
+      } else if (parts[0].localeCompare('!url') === 0) {
+        // error, can't use URL directly in JSON search
+        // TODO : could return URL result here instead?
+        jsonApiError(res, "Should not search via JSON API with !url")
+        return
+      }
+    }
+  }
+  //searchDuckDuckGoDirectly(searchTerm, res, options)
+  performSearchJson(searchTerm, res, options)
+}
+
+function performSearchJson(searchTerm, res, options) {
+  const searchOptions = {
+    qs: {
+        q: searchTerm
+    }
+  }
+  searchEngine.Yahoo(searchOptions)
+    .then(results => {
+      console.log(results)
+      // TODO : use options
+      jsonApiResult(res, results)
+    })
+    .catch(err => {
+      console.error(err)
+      jsonApiError(res, ' Search for "' + searchTerm + '" could not be performed')
+    })
+}
+
+function jsonApiResult(res, jsonData) {
+  res.status(200) // Success
+  res.json(jsonData)
+}
+
+function jsonApiError(res, message) {
+  res.status(400) // Bad request
+  res.json({message: message})
+}
+
 
 // Start server
 app.listen(app.get('port'), function () {
