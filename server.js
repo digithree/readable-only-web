@@ -312,8 +312,9 @@ function searchVariousDirectly(searchTerm, res, options) {
         q: searchTerm
     }
   }
-  searchEngine.Google(searchOptions)
+  searchEngine.Bing(searchOptions)
     .then(results => {
+      results = results.map(it => {return {title: it.title, url: it.link, description: it.description}})
       let htmlText = buildSearchResultsPage(searchTerm, results, options)
       processCleanHtmlOptions(htmlText, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
         htmlResult(htmlRes, res)
@@ -330,7 +331,7 @@ function searchVariousDirectly(searchTerm, res, options) {
 
 function buildSearchResultsPage(searchTerm, results, options) {
   if (results === undefined || results == null || results.length == 0) {
-    return constructUrlErrorPage(url + ' (article is undefined for search)', options)
+    return constructUrlErrorPage(searchTerm + ' (article is undefined for search)', options)
   }
   var html = '<html>\n\t<body>'
   for (var key in results) {
@@ -895,9 +896,10 @@ function performSearchJson(searchTerm, res, options) {
         q: searchTerm
     }
   }
-  searchEngine.Google(searchOptions)
+  searchEngine.Bing(searchOptions)
     .then(results => {
-      console.log(results)
+      //console.log(results)
+      results = results.map(it => {return {title: it.title, url: it.link, description: it.description}})
       // TODO : use options
       jsonApiResult(res, results)
     })
