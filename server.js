@@ -312,7 +312,7 @@ function searchVariousDirectly(searchTerm, res, options) {
         q: searchTerm
     }
   }
-  searchEngine.Yahoo(searchOptions)
+  searchEngine.Google(searchOptions)
     .then(results => {
       let htmlText = buildSearchResultsPage(searchTerm, results, options)
       processCleanHtmlOptions(htmlText, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
@@ -895,7 +895,7 @@ function performSearchJson(searchTerm, res, options) {
         q: searchTerm
     }
   }
-  searchEngine.Yahoo(searchOptions)
+  searchEngine.Google(searchOptions)
     .then(results => {
       console.log(results)
       // TODO : use options
