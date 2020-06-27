@@ -126,7 +126,7 @@ var base64Image = require('node-base64-image')
 const wait = require('wait.for')
 var probeImageSize = require('probe-image-size')
 const moment = require('moment')
-const searchEngine = require('search-engine-nodejs').default
+const searchEngine = require('search-engine-client-detailed')
 
 const metascraper = require('metascraper')([
   require('metascraper-author')(),
@@ -307,13 +307,13 @@ function searchDuckDuckGoDirectly(searchTerm, res, options) {
 }
 
 function searchVariousDirectly(searchTerm, res, options) {
-  const searchOptions = {
-    qs: {
-        q: searchTerm
-    }
-  }
-  searchEngine.Yahoo(searchOptions)
-    .then(results => {
+  searchEngine.duckduckgo(searchTerm)
+    .then(response => {
+      //console.log(response)
+      if (response == null || response.links == null || response.links.length == 0) {
+        throw {error: "No results"}
+      }
+      var results = response.links.map(it => {return {title: it.text, description: '', url: it.url}})
       let htmlText = buildSearchResultsPage(searchTerm, results, options)
       processCleanHtmlOptions(htmlText, SEARCH_API_ADDR + encodeURI(searchTerm), options, function(htmlRes) {
         htmlResult(htmlRes, res)
@@ -330,7 +330,8 @@ function searchVariousDirectly(searchTerm, res, options) {
 
 function buildSearchResultsPage(searchTerm, results, options) {
   if (results === undefined || results == null || results.length == 0) {
-    return constructUrlErrorPage(url + ' (article is undefined for search)', options)
+    console.log(results)
+    return constructUrlErrorPage(searchTerm + ' (no search results for query)', options)
   }
   var html = '<html>\n\t<body>'
   for (var key in results) {
@@ -890,14 +891,10 @@ function doSearchJson(searchTerm, res, options) {
 }
 
 function performSearchJson(searchTerm, res, options) {
-  const searchOptions = {
-    qs: {
-        q: searchTerm
-    }
-  }
-  searchEngine.Yahoo(searchOptions)
-    .then(results => {
-      console.log(results)
+  searchEngine.duckduckgo(searchTerm)
+    .then(response => {
+      //console.log(response)
+      var results = response.links.map(it => {return {title: it.text, description: '', url: it.url}})
       // TODO : use options
       jsonApiResult(res, results)
     })
