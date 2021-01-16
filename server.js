@@ -1018,8 +1018,21 @@ function constructArticleJson(article, metadata, url) {
     attribution: metadata.author,
     date: (metadata.date != null && metadata.date != '') ? moment(metadata.date).unix() : null,
     publisher: metadata.publisher,
-    body: article.content
+    body: cleanBodyHtml(article.content)
   }
+}
+
+function cleanBodyHtml(htmlText) {
+  const $ = cheerio.load(htmlText)
+  var tagsToRemove = $('*')
+      .get()
+      .map(el => el.name)
+      .filter(el => !TAGS_WHITELIST.includes(el))
+  for (let idx in tagsToRemove) {
+    $(tagsToRemove[idx])
+        .remove()
+  }
+  return $.html()
 }
 
 
