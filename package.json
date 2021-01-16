@@ -39,9 +39,9 @@
     "node-html-builder": "1.0.2",
     "probe-image-size": "5.0.0",
     "request": "2.88.0",
+    "search-engine-nodejs": "1.0.9",
     "showdown": "^1.9.1",
     "string": "3.3.3",
-    "wait.for": "0.6.6",
-    "search-engine-nodejs": "1.0.9"
+    "wait.for": "0.6.6"
   }
 }

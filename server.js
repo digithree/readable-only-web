@@ -217,7 +217,7 @@ app.get('/search-json', function (req, res) {
     return
   }
   var searchTerm = req.query.q
-  doSearchJson(searchTerm, res, options)
+  doSearchJson(searchTerm, res)
 })
 
 app.get('/url', function (req, res) {
@@ -229,6 +229,16 @@ app.get('/url', function (req, res) {
   }
   var url = req.query.q
   processUrl(url, res, options)
+})
+
+app.get('/url-json', function (req, res) {
+  updateServiceHostname(req)
+  //var options = getOptionsFromQueryObj(req.query)
+  if (!req.query.q) {
+    jsonApiError(res, "NONE GIVEN, invalid search term")
+    return
+  }
+  doUrlJson(req.query.q, res)
 })
 
 app.get('/c/:permlink', function (req, res) {
@@ -870,7 +880,7 @@ function createUrlBar(options) {
 
 // JSON interface
 
-function doSearchJson(searchTerm, res, options) {
+function doSearchJson(searchTerm, res) {
   if (searchTerm.startsWith('!')) {
     let parts = searchTerm.split(' ')
     if (parts.length > 1) {
@@ -886,11 +896,10 @@ function doSearchJson(searchTerm, res, options) {
       }
     }
   }
-  //searchDuckDuckGoDirectly(searchTerm, res, options)
-  performSearchJson(searchTerm, res, options)
+  performSearchJson(searchTerm, res)
 }
 
-function performSearchJson(searchTerm, res, options) {
+function performSearchJson(searchTerm, res) {
   const searchOptions = {
     qs: {
         q: searchTerm
@@ -908,6 +917,111 @@ function performSearchJson(searchTerm, res, options) {
       jsonApiError(res, ' Search for "' + searchTerm + '" could not be performed')
     })
 }
+
+function doUrlJson(url, res) {
+  var uri = nodeUrl.parse(url)
+  // remove any blacklisted params
+  var toRemove = []
+  var searchParams = new URLSearchParams(uri.search)
+  searchParams.forEach((value, name, searchParams) => {
+    if (QUERY_PARAM_BLACKLIST_EXACT.includes(name)) {
+      toRemove.push(name)
+    }
+    for (var wildcardParam in QUERY_PARAM_BLACKLIST_WILDCARD) {
+      if (name.startsWith(QUERY_PARAM_BLACKLIST_WILDCARD[wildcardParam])) {
+        toRemove.push(name)
+        break
+      }
+    }
+  })
+  for (var param in toRemove) {
+    searchParams.delete(toRemove[param])
+  }
+  var searchParamsStr = ''
+  if (searchParams.toString().length > 0) {
+    searchParamsStr = '?' + searchParams.toString()
+  }
+  uri = nodeUrl.parse(S(url).replaceAll(uri.search, searchParamsStr).toString())
+  request.get({
+    url: uri,
+    headers: {'User-Agent': 'request'}
+  }, (err, res2, data) => {
+    if (err) {
+      console.error(err)
+      jsonApiError(res, "GET error, " + res2.err)
+      return
+    }
+    // apply DOMPurify to clean HTML before constructing virtual DOM to articlize
+    const window = (new JSDOM('')).window;
+    const DOMPurify = createDOMPurify(window);
+    let cleanHtmlText = DOMPurify.sanitize(data);
+
+    // process DOM and articlize
+    var dom = new JSDOM(cleanHtmlText, {url: url});
+    let reader = new Readability(dom.window.document);
+    let article = reader.parse();
+
+    // get better metadata from Metascraper than we can get from Readability
+    metascraper({ url: url, html: data })
+      .then(metadata => {
+        console.log(metadata)
+        // construct JSON for API call
+        var results = constructArticleJson(article, metadata, url)
+        if (results == null) {
+          console.error("Article is null")
+          jsonApiError(res, "Article could not be parsed")
+        } else {
+          jsonApiResult(res, results)
+        }
+      })
+      .catch(err => {
+        console.error(err)
+        jsonApiError(res, url + ' (metascraper error, ' + err + ')')
+      })
+  })
+}
+
+function constructArticleJson(article, metadata, url) {
+  if (article === undefined || article == null) {
+    return null
+  }
+  var title = ''
+  if (metadata !== undefined &&
+      metadata != null &&
+      metadata.title !== undefined &&
+      metadata.title != null &&
+      metadata.title != '') {
+    title = metadata.title
+  } else if (article.title !== undefined &&
+      article.title != null &&
+      article.title != '') {
+    title = article.title
+  } else if (article.excerpt !== undefined &&
+      article.excerpt != null &&
+      article.excerpt != '') {
+    title = article.excerpt
+  } else {
+    const $ = cheerio.load(article.content)
+    if ($('h1').get().length > 0) {
+      title = $('h1').text()
+    } else if ($('p').get().length > 0) {
+      title = $('p').text()
+    } else {
+      // fall back in worst case to use URL
+      title = 'Page at ' + url
+    }
+  }
+
+  return {
+    url: url,
+    title: title,
+    attribution: metadata.author,
+    date: (metadata.date != null && metadata.date != '') ? moment(metadata.date).unix() : null,
+    publisher: metadata.publisher,
+    body: article.content
+  }
+}
+
 
 function jsonApiResult(res, jsonData) {
   res.status(200) // Success
