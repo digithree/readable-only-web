@@ -158,10 +158,10 @@ app.get('/', function (req, res) {
   }
   // else show homepage
   var html = htmlBuilder({
-    title: 'Readble Only Web',
+    title: 'Readable Only Web',
     favicon: '/icon/favicon-16x16.png',
     links: createHeaderLink(options, PAGE_LINK_HEADER_MAIN),
-    content: wrapHtmlContentForStyling('<h1>ROW: Readble Only Web</h1><br/>' + createSearchBar(options) + createUrlBar(options) +
+    content: wrapHtmlContentForStyling('<h1>ROW: Readable Only Web</h1><br/>' + createSearchBar(options) + createUrlBar(options) +
         '<br/><br/><hr/><p><a href="/md/README">About this service</a> | ' +
         '<a href="https://github.com/digithree/readable-only-web">Project on GitHub</a></p>')
   })
