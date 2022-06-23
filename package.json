@@ -27,7 +27,7 @@
     "cheerio": "1.0.0-rc.3",
     "dompurify": "^2.0.7",
     "express": "^4.17.1",
-    "jsdom": "15.1.1",
+    "jsdom": "16.5.0",
     "metascraper": "5.9.0",
     "metascraper-author": "5.8.13",
     "metascraper-date": "5.8.13",
